@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Radek\\RiderProjects\\ShoppingCartUser\\ShoppingCartUser\\ShoppingCartUser.csproj",
+      "projectUniqueName": "C:\\Users\\Radek\\RiderProjects\\onlineShoppingCartService\\ShoppingCartUser\\ShoppingCartUser\\ShoppingCartUser.csproj",
       "projectName": "ShoppingCartUser",
-      "projectPath": "C:\\Users\\Radek\\RiderProjects\\ShoppingCartUser\\ShoppingCartUser\\ShoppingCartUser.csproj",
+      "projectPath": "C:\\Users\\Radek\\RiderProjects\\onlineShoppingCartService\\ShoppingCartUser\\ShoppingCartUser\\ShoppingCartUser.csproj",
       "packagesPath": "C:\\Users\\Radek\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Radek\\RiderProjects\\ShoppingCartUser\\ShoppingCartUser\\obj\\",
+      "outputPath": "C:\\Users\\Radek\\RiderProjects\\onlineShoppingCartService\\ShoppingCartUser\\ShoppingCartUser\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Radek\\AppData\\Roaming\\NuGet\\NuGet.Config",

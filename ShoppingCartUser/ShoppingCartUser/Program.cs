@@ -19,6 +19,7 @@ class ChildProcess
                 Console.WriteLine("Wybierz opcje:");
                 Console.WriteLine("0 - Logowanie");
                 Console.WriteLine("1 - Rejestracja");
+                Console.WriteLine("2 - Zakoncz");
                 
                 try
                 {
@@ -54,7 +55,6 @@ class ChildProcess
                             throw new Exception();
 
                         break;
-
                 }
                 
             }

@@ -5,7 +5,7 @@ class ParentProcess
 {
     static void Main()
     {
-        var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
+        var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 3);
         pipeServer.WaitForConnection(); // czeka
 
         using (var reader = new StreamReader(pipeServer))
