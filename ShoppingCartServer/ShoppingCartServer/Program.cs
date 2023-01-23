@@ -22,6 +22,7 @@ class ParentProcess
                         Console.WriteLine("Login: " + login);
                         Console.WriteLine("Haslo: " + haslo);
                         //test2
+                        //test3
                         
                         writer.WriteLine("TRUE");
                         writer.Flush();
