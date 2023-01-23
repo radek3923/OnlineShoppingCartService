@@ -21,7 +21,8 @@ class ParentProcess
                         var haslo = reader.ReadLine();
                         Console.WriteLine("Login: " + login);
                         Console.WriteLine("Haslo: " + haslo);
-
+                        //test2
+                        
                         writer.WriteLine("TRUE");
                         writer.Flush();
 
