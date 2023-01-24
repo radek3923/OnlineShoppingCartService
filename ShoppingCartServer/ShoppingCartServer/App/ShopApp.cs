@@ -7,9 +7,15 @@ class ShopApp
 {
     private const string AppName = "Sklep internetowy";
     
-    private static List<User> _users;
+    private const string usersPathFile = "users.csv";
+    private const string productsPathFile = "products.csv";
+    
+    private static List<User> _users = await readAllUsers(usersPathFile);
+    //private static List<Product> _products = await readAllProducts(productsPathFile);
+    
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     
+
     static void Main()
     {
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
@@ -66,4 +72,26 @@ class ShopApp
         Customer customer = new Customer("login", "haslo", "email", "nrTel", new Guid(), "radek", "potocki");
         return customer;
     }
+
+    public static async Task<List<User>> readAllUsers(String userPathFile)
+    {
+        String usersAsStringFromCsv = await readCsvFile(usersPathFile);
+        
+        List<User> _users = usersAsStringFromCsv.
+
+        return _users;
+    }
+    public static Task<string> readCsvFile(String pathFile) => Task.Run( () =>
+    {
+        Thread.Sleep(1000);
+        try
+        {
+            return File.ReadAllText(pathFile);
+        }
+        catch (IOException e)
+        {
+            Console.WriteLine("File {0} doesnt exist. Error message: {1}", pathFile, e.Source);
+            return "";
+        }
+    });
 }
