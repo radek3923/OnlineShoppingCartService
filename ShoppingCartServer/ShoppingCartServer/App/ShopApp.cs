@@ -46,13 +46,10 @@ class ShopApp
                     else
                     {
                         writer.WriteLine("TRUE");// it means user is logged
-                        writer.WriteLine("FALSE"); // it means user is admin
+                        writer.WriteLine("FALSE"); // it means user is not admin
                         var customer = isCustomerExist(login, password);
                     }
                     
-                    
-                        
-                    //writer.WriteLine("TRUE");
                     writer.Flush();
 
                     break;

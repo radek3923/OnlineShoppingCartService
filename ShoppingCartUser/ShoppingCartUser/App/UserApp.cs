@@ -11,38 +11,28 @@ class UserApp
         Console.WriteLine("Oczekiwanie na połączenie z serwerem");
         pipeClient.Connect(); // iniciuje
         Console.Clear();
-
-        int option = 1;
-
+        
         var reader = new StreamReader(pipeClient);
         var writer = new StreamWriter(pipeClient);
 
-        while (option != -1)
+        int option;
+        
+        do
         {
             Console.WriteLine("Wybierz opcje:");
             Console.WriteLine("0 - Logowanie");
             Console.WriteLine("1 - Rejestracja");
             Console.WriteLine("2 - Zakoncz");
 
-            try
-            {
-                option = int.Parse(Console.ReadLine()!);
-            }
-            catch (FormatException)
-            {
-                option = -1;
-            }
+            option = askForOption();
 
             switch (option)
             {
-                case -1:
-                    Console.WriteLine("Trwa wyłączanie programu ");
-                    writer.WriteLine("-1");
-                    pipeClient.Close();
-                    break;
                 case 0:
-                    var tuple= isUserIsLogged(writer, reader);
-                    
+                    var tuple = isUserLogged(writer, reader);
+                    //tuple.Item1 means isUserExist in database
+                    //tuple.Item2 means isUserAnAdmin
+
                     if (tuple.Item1)
                     {
                         if (UserType.Admin.Equals(tuple.Item2))
@@ -58,18 +48,25 @@ class UserApp
 
                         option = -1;
                     }
+
                     break;
                 case 1:
                     //Registration
-                    RegistrationForm(writer,reader);
+                    RegistrationForm(writer, reader);
+                    break;
+                case 2:
+                    option = endTheProgram(pipeClient, writer, reader);
+                    break;
+                default:
+                    Console.WriteLine("Niepoprawna wartość, spróbuj ponownie");
                     break;
             }
-        }
+        } while (true);
 
-        
+
     }
     
-    public static (bool, UserType) isUserIsLogged(StreamWriter writer, StreamReader reader)
+    public static (bool, UserType) isUserLogged(StreamWriter writer, StreamReader reader)
     {
         Console.WriteLine("Podaj login: ");
         var login = Console.ReadLine();
@@ -95,7 +92,7 @@ class UserApp
         }
         else
         {
-            Console.WriteLine("Błędne dane, spróbuj ponownie");
+            Console.WriteLine("Błędne dane, spróbuj ponownie\n");
             return (false, UserType.None);
         }
     }
@@ -103,6 +100,38 @@ class UserApp
     {
         
     }
-    
+
+    public static void AdminMenu()
+    {
+        Console.Clear();
+        Console.WriteLine("Wybierz opcje:");
+        Console.WriteLine("0 - Dodaj nowy produkt");
+        Console.WriteLine("1 - Modyfikuj produkt");
+        Console.WriteLine("2 - Wyloguj");
+    }
+
+    public static int askForOption()
+    {
+        int option;
+        
+        try
+        {
+            option = int.Parse(Console.ReadLine()!);
+        }
+        catch (FormatException)
+        {
+            option = -1;
+        }
+        return option;
+    }
+
+    public static int endTheProgram(NamedPipeClientStream pipeClient,StreamWriter writer, StreamReader reader)
+    {
+        Console.WriteLine("Trwa wyłączanie programu ");
+        writer.WriteLine("-1"); //TODO sending a message to the server about closing the application
+        pipeClient.Close();
+
+        return -1;
+    }
     
 }
