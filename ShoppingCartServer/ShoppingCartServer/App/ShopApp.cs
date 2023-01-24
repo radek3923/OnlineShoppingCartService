@@ -7,17 +7,25 @@ class ShopApp
 {
     private const string AppName = "Sklep internetowy";
     
-    private const string usersPathFile = "users.csv";
-    private const string productsPathFile = "products.csv";
+    private const string customersPathFile = @"customers.csv";
+    // private const string customersPathFile = @"products.csv";
     
-    private static List<User> _users = await readAllUsers(usersPathFile);
-    //private static List<Product> _products = await readAllProducts(productsPathFile);
+
+    private static List<Customer> _customers;
     
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     
 
-    static void Main()
+    public static async Task Main()
     {
+        _customers = await importCustomers(customersPathFile);
+        
+        foreach (var customer in _customers)
+        {
+            Console.WriteLine(customer.Login+", " + customer.Password);
+        }
+        
+        
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
 
         Console.WriteLine("Oczekiwanie na połączenie z klientem");
@@ -55,7 +63,8 @@ class ShopApp
                         writer.WriteLine("FALSE"); // it means user is not admin
                         var customer = isCustomerExist(login, password);
                     }
-                    
+                    Console.WriteLine(_customers.Capacity);
+
                     writer.Flush();
 
                     break;
@@ -72,15 +81,68 @@ class ShopApp
         Customer customer = new Customer("login", "haslo", "email", "nrTel", new Guid(), "radek", "potocki");
         return customer;
     }
-
-    public static async Task<List<User>> readAllUsers(String userPathFile)
+    
+    public static Task<List<Customer>> importCustomers(String customersPathFile) => Task.Run( () =>
     {
-        String usersAsStringFromCsv = await readCsvFile(usersPathFile);
-        
-        List<User> _users = usersAsStringFromCsv.
+        List<Customer> customers = new List<Customer>();
+        // try
+        // {
+            // using StreamReader reader = new StreamReader(customersPathFile);
+            // while (true)
+            // {
+            //     string? line =  reader.ReadLine();
+            //     if (line == null)
+            //     {
+            //         break;
+            //     }
+            //
+            //     string[] split = line.Split(",");
+            //     string login = split[0];
+            //     string password = split[1];
+            //     string addressEmail = split[2];
+            //     string phoneNumber = split[3];
+            //     Guid cartId = new Guid(split[4]);
+            //     string firstName = split[5];
+            //     string lastName = split[6];
+            //     
+            //     var customer = new Customer(login, password, addressEmail, phoneNumber, cartId, firstName, lastName);
+            //     customers.Add(customer);
+            // }
 
-        return _users;
+            foreach (var line in File.ReadLines(customersPathFile))
+            {
+                string[] split = line.Split(",");
+                string login = split[0];
+                string password = split[1];
+                string addressEmail = split[2];
+                string phoneNumber = split[3];
+                //Guid cartId = new Guid(split[4]);
+                string firstName = split[5];
+                string lastName = split[6];
+                
+                var customer = new Customer(login, password, addressEmail, phoneNumber, new Guid(), firstName, lastName);
+                customers.Add(customer);
+            }
+            return customers;
+        // }
+        // catch(IOException)
+        // {
+        //     throw new Exception($"File {customersPathFile} doesnt exist");
+        // }
+        // return customers;
+    });
+    
+    public static async Task<List<Customer>> readAllUsers(String userPathFile)
+    {
+        String usersAsStringFromCsv = await readCsvFile(customersPathFile);
+    
+        String[] split = usersAsStringFromCsv.Split(";");
+        
+        //List<User> _users = usersAsStringFromCsv.
+    
+        return _customers;
     }
+    
     public static Task<string> readCsvFile(String pathFile) => Task.Run( () =>
     {
         Thread.Sleep(1000);
