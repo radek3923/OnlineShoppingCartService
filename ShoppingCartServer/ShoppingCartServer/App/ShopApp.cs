@@ -59,7 +59,7 @@ class ShopApp
                     Console.WriteLine("Login: " + login);
                     Console.WriteLine("Haslo: " + password);
 
-                    var customer = findCustomerInDatabase(login, password);
+                    var customer = findCustomerInDatabase(login, password, _customers);
                     
                     if(customer is not null)
                     {
@@ -89,12 +89,16 @@ class ShopApp
         pipeServer.Close();
     }
 
-    public static Customer findCustomerInDatabase(String login, String password)
+    public static Customer findCustomerInDatabase(String login, String password, List<Customer> _customers)
     {
         //Check if Customer exists in Database 
-       
-        Customer customer = new Customer("login", "haslo", "email", "nrTel", new Guid(), "radek", "potocki");
+        
+        var customer = _customers.Where( (customer) => (customer.Login == login && customer.Password == password)).FirstOrDefault() ?? null;
+
         return customer;
+
+        //Customer customer = new Customer("login", "haslo", "email", "nrTel", new Guid(), "radek", "potocki");
+
     }
     
     public static Task<List<Customer>> importCustomers(String customersPathFile) => Task.Run( () =>

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using System;
 using System.IO.Pipes;
+using ShoppingCartUser.App;
 using ShoppingCartUser.Enums;
 
 class UserApp
@@ -14,6 +15,8 @@ class UserApp
         
         var reader = new StreamReader(pipeClient);
         var writer = new StreamWriter(pipeClient);
+
+        List<CartItem> cartUser = new List<CartItem>();
 
         int option;
         
@@ -31,24 +34,24 @@ class UserApp
                 case 0:
                     var tuple = isUserLogged(writer, reader);
                     //tuple.Item1 means isUserExist in database
-                    //tuple.Item2 means isUserAnAdmin
+                    //tuple.Item2 means userType (customer or admin)
 
-                    if (tuple.Item1)
+                    if (tuple.Item1 && UserType.Admin.Equals(tuple.Item2))
                     {
-                        if (UserType.Admin.Equals(tuple.Item2))
-                        {
-                            //show menu for admin 
-                            Console.WriteLine("Panel admina");
-                        }
-                        else
-                        {
-                            //show menu for casual user
-                            Console.WriteLine("Panel klienta");
-                        }
-
-                        option = -1;
+                        Console.WriteLine("Panel admina");
+                        //AdminMenu();
+                    }
+                    else if (tuple.Item1)
+                    {
+                        //show menu for casual user
+                        Console.WriteLine("Panel klienta");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Błędne dane logowania");
                     }
 
+                    option = -1;
                     break;
                 case 1:
                     //Registration
@@ -101,6 +104,15 @@ class UserApp
         
     }
 
+    public static void CustomerMenu()
+    {
+        Console.Clear();
+        Console.WriteLine("Wybierz opcje:");
+        Console.WriteLine("0 - Kup produkt");
+        Console.WriteLine("1 - Wyświetl produkt");
+        Console.WriteLine("2 - Wyloguj");
+    }
+    
     public static void AdminMenu()
     {
         Console.Clear();
