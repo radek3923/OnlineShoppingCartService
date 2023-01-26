@@ -46,19 +46,13 @@ class UserApp
                         //show menu for casual user
                         Console.WriteLine("Panel klienta");
                     }
-                    else
-                    {
-                        Console.WriteLine("Błędne dane logowania");
-                    }
-
-                    option = -1;
                     break;
                 case 1:
                     //Registration
                     RegistrationForm(writer, reader);
                     break;
                 case 2:
-                    option = endTheProgram(pipeClient, writer, reader);
+                    option = -1;
                     break;
                 default:
                     Console.WriteLine("Niepoprawna wartość, spróbuj ponownie");
@@ -66,6 +60,7 @@ class UserApp
             }
         } while (option != -1);
 
+        endTheProgram(pipeClient, writer, reader);
 
     }
     

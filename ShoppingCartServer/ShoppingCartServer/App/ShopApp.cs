@@ -48,7 +48,7 @@ class ShopApp
             {
                 //Disconect
                 case -1:
-                    Console.WriteLine("testttt ");
+                    Console.WriteLine("Trwa wyłączanie serwera ");
                     stateConnection = State.Disconnected;
                     break;
                 //Login
@@ -63,6 +63,11 @@ class ShopApp
                     
                     if(customer is not null)
                     {
+                        writer.WriteLine("TRUE");// it means user is logged
+                        writer.WriteLine("FALSE"); // it means user is not admin
+                    }
+                    else
+                    {
                         if (admin.Login.Equals(login) && admin.Password.Equals(password))
                         {
                             writer.WriteLine("TRUE");// it means user is logged
@@ -70,14 +75,9 @@ class ShopApp
                         }
                         else
                         {
-                            writer.WriteLine("TRUE");// it means user is logged
+                            writer.WriteLine("FALSE");// it means user not found in database
                             writer.WriteLine("FALSE"); // it means user is not admin
                         }
-                    }
-                    else
-                    {
-                        writer.WriteLine("FALSE");// it means user not found in database
-                        writer.WriteLine("FALSE"); // it means user is not admin
                     }
                     writer.Flush();
                     break;
