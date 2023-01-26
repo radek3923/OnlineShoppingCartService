@@ -61,7 +61,7 @@ class UserApp
                     Console.WriteLine("Niepoprawna wartość, spróbuj ponownie");
                     break;
             }
-        } while (true);
+        } while (option != -1);
 
 
     }
@@ -75,7 +75,7 @@ class UserApp
         var haslo = Console.ReadLine();
                     
         
-        writer.WriteLine("1");
+        writer.WriteLine("1"); // 1 means user wants to login to server
         writer.WriteLine(login);
         writer.WriteLine(haslo);
         writer.Flush(); // wyslanie, zwolnienie bufora
@@ -128,7 +128,8 @@ class UserApp
     public static int endTheProgram(NamedPipeClientStream pipeClient,StreamWriter writer, StreamReader reader)
     {
         Console.WriteLine("Trwa wyłączanie programu ");
-        writer.WriteLine("-1"); //TODO sending a message to the server about closing the application
+        writer.WriteLine("-1"); //means user wants to disconect from the server
+        writer.Flush();
         pipeClient.Close();
 
         return -1;

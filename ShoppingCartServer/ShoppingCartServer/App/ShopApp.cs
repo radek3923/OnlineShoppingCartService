@@ -27,14 +27,12 @@ class ShopApp
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
 
         Console.WriteLine("Oczekiwanie na połączenie z klientem");
-        //Waiting when client connect to server
         pipeServer.WaitForConnection();
         Console.Clear();
         Console.WriteLine("Połączono z klientem");
         
         foreach (var customer in _customers)
         {
-            //Console.WriteLine(customer.Login+", " + customer.Password);
             Console.WriteLine(customer.ToString());
         }
         
@@ -48,6 +46,11 @@ class ShopApp
             var option = int.Parse(reader.ReadLine()!);
             switch (option)
             {
+                //Disconect
+                case -1:
+                    Console.WriteLine("testttt ");
+                    stateConnection = State.Disconnected;
+                    break;
                 //Login
                 case 1:
 
@@ -77,11 +80,12 @@ class ShopApp
                         writer.WriteLine("FALSE"); // it means user is not admin
                     }
                     writer.Flush();
-
+                    break;
+                //Register
+                case 2:
                     break;
             }
         }
-
         pipeServer.Close();
     }
 
