@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO.Pipes;
+﻿using System.IO.Pipes;
 using ShoppingCartServer.Enums;
 using ShoppingCartServer.Models;
 
@@ -8,24 +7,23 @@ class ShopApp
     private const string AppName = "Sklep internetowy";
     
     private const string customersPathFile = @"customers.csv";
-    // private const string customersPathFile = @"products.csv";
+    private const string productsPathFile = @"products.csv";
     
 
     private static List<Customer> _customers;
+    private static List<Product> _products;
     
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     
 
     public static async Task Main()
     {
-        _customers = await importCustomers(customersPathFile);
+        var (importCustomersTask, importProductTask) =
+            (importCustomers(customersPathFile), importProducts(productsPathFile));
         
-        foreach (var customer in _customers)
-        {
-            Console.WriteLine(customer.Login+", " + customer.Password);
-        }
-        
-        
+        _customers = await importCustomersTask;
+        _products = await importProductTask;
+
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
 
         Console.WriteLine("Oczekiwanie na połączenie z klientem");
@@ -33,6 +31,12 @@ class ShopApp
         pipeServer.WaitForConnection();
         Console.Clear();
         Console.WriteLine("Połączono z klientem");
+        
+        foreach (var customer in _customers)
+        {
+            //Console.WriteLine(customer.Login+", " + customer.Password);
+            Console.WriteLine(customer.ToString());
+        }
         
         State stateConnection = State.Connected;
         
@@ -52,19 +56,26 @@ class ShopApp
                     Console.WriteLine("Login: " + login);
                     Console.WriteLine("Haslo: " + password);
 
-                    if (admin.Login.Equals(login) && admin.Password.Equals(password))
+                    var customer = findCustomerInDatabase(login, password);
+                    
+                    if(customer is not null)
                     {
-                        writer.WriteLine("TRUE");// it means user is logged
-                        writer.WriteLine("TRUE"); // it means user is admin
+                        if (admin.Login.Equals(login) && admin.Password.Equals(password))
+                        {
+                            writer.WriteLine("TRUE");// it means user is logged
+                            writer.WriteLine("TRUE"); // it means user is admin
+                        }
+                        else
+                        {
+                            writer.WriteLine("TRUE");// it means user is logged
+                            writer.WriteLine("FALSE"); // it means user is not admin
+                        }
                     }
                     else
                     {
-                        writer.WriteLine("TRUE");// it means user is logged
+                        writer.WriteLine("FALSE");// it means user not found in database
                         writer.WriteLine("FALSE"); // it means user is not admin
-                        var customer = isCustomerExist(login, password);
                     }
-                    Console.WriteLine(_customers.Capacity);
-
                     writer.Flush();
 
                     break;
@@ -74,9 +85,9 @@ class ShopApp
         pipeServer.Close();
     }
 
-    public static Customer isCustomerExist(String login, String password)
+    public static Customer findCustomerInDatabase(String login, String password)
     {
-        //Search is User exist in Database 
+        //Check if Customer exists in Database 
        
         Customer customer = new Customer("login", "haslo", "email", "nrTel", new Guid(), "radek", "potocki");
         return customer;
@@ -85,30 +96,8 @@ class ShopApp
     public static Task<List<Customer>> importCustomers(String customersPathFile) => Task.Run( () =>
     {
         List<Customer> customers = new List<Customer>();
-        // try
-        // {
-            // using StreamReader reader = new StreamReader(customersPathFile);
-            // while (true)
-            // {
-            //     string? line =  reader.ReadLine();
-            //     if (line == null)
-            //     {
-            //         break;
-            //     }
-            //
-            //     string[] split = line.Split(",");
-            //     string login = split[0];
-            //     string password = split[1];
-            //     string addressEmail = split[2];
-            //     string phoneNumber = split[3];
-            //     Guid cartId = new Guid(split[4]);
-            //     string firstName = split[5];
-            //     string lastName = split[6];
-            //     
-            //     var customer = new Customer(login, password, addressEmail, phoneNumber, cartId, firstName, lastName);
-            //     customers.Add(customer);
-            // }
-
+        try
+        {
             foreach (var line in File.ReadLines(customersPathFile))
             {
                 string[] split = line.Split(",");
@@ -116,7 +105,7 @@ class ShopApp
                 string password = split[1];
                 string addressEmail = split[2];
                 string phoneNumber = split[3];
-                //Guid cartId = new Guid(split[4]);
+                //Guid Id = new Guid(split[4]);
                 string firstName = split[5];
                 string lastName = split[6];
                 
@@ -124,12 +113,37 @@ class ShopApp
                 customers.Add(customer);
             }
             return customers;
-        // }
-        // catch(IOException)
-        // {
-        //     throw new Exception($"File {customersPathFile} doesnt exist");
-        // }
-        // return customers;
+        }
+        catch(IOException)
+        {
+            throw new Exception($"File {customersPathFile} doesnt exist");
+        }
+    });
+    
+    public static Task<List<Product>> importProducts(String productsPathFile) => Task.Run( () =>
+    {
+        List<Product> products = new List<Product>();
+        try
+        {
+            foreach (var line in File.ReadLines(productsPathFile))
+            {
+                string[] split = line.Split(",");
+                // Guid id = split[0];
+                // DateTimeOffset createdAt = split[1];
+                // DateTimeOffset updatedAt = split[2];
+                // string name = split[3];
+                // string namePlural = split[5];
+                // decimal unitPrice = split[6];
+                
+                var product = new Product(new Guid(),new DateTimeOffset(), new DateTimeOffset(), "", "", new decimal());
+                products.Add(product);
+            }
+            return products;
+        }
+        catch(IOException)
+        {
+            throw new Exception($"File {productsPathFile} doesnt exist");
+        }
     });
     
     public static async Task<List<Customer>> readAllUsers(String userPathFile)

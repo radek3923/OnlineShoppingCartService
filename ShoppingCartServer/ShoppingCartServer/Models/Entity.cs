@@ -7,4 +7,11 @@ public abstract class Entity  : IEntity
     public Guid Id { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    protected Entity(Guid id, DateTimeOffset createdAt, DateTimeOffset updatedAt)
+    {
+        Id = id;
+        CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
+    }
 }

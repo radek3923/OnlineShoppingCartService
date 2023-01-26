@@ -3,10 +3,8 @@
 public sealed class Cart : Entity
 {   
     public List<CartItem> Products { get; set; } = new List<CartItem>();
-    
-    public Cart()
+
+    public Cart(Guid id, DateTimeOffset createdAt, DateTimeOffset updatedAt) : base(id, createdAt, updatedAt)
     {
-        CreatedAt = DateTimeOffset.UtcNow;
-        UpdatedAt = DateTimeOffset.UtcNow;
     }
 }
