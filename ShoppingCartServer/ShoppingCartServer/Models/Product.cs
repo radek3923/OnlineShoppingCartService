@@ -12,4 +12,10 @@ public sealed class Product : Entity
         NamePlural = namePlural;
         UnitPrice = unitPrice;
     }
+    
+    public override string ToString()
+    {
+        return string.Format("id: {0}, name: {1}, namePlural: {2}, unitPrice: {3}, createdAt: {4}, updatedAt: {5}", 
+            Id, Name, NamePlural, UnitPrice, CreatedAt, UpdatedAt);
+    }
 }

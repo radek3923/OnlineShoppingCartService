@@ -31,9 +31,16 @@ class ShopApp
         Console.Clear();
         Console.WriteLine("Połączono z klientem");
         
+        Console.WriteLine("Klienci:\n");
         foreach (var customer in _customers)
         {
             Console.WriteLine(customer.ToString());
+        }
+        
+        Console.WriteLine("\nProdukty:\n");
+        foreach (var product in _products)
+        {
+            Console.WriteLine(product.ToString());
         }
         
         State stateConnection = State.Connected;
@@ -91,14 +98,8 @@ class ShopApp
 
     public static Customer findCustomerInDatabase(String login, String password, List<Customer> _customers)
     {
-        //Check if Customer exists in Database 
-        
         var customer = _customers.Where( (customer) => (customer.Login == login && customer.Password == password)).FirstOrDefault() ?? null;
-
         return customer;
-
-        //Customer customer = new Customer("login", "haslo", "email", "nrTel", new Guid(), "radek", "potocki");
-
     }
     
     public static Task<List<Customer>> importCustomers(String customersPathFile) => Task.Run( () =>
@@ -113,11 +114,11 @@ class ShopApp
                 string password = split[1];
                 string addressEmail = split[2];
                 string phoneNumber = split[3];
-                //Guid Id = new Guid(split[4]);
+                Guid Id = Guid.Parse(split[4]);
                 string firstName = split[5];
                 string lastName = split[6];
                 
-                var customer = new Customer(login, password, addressEmail, phoneNumber, new Guid(), firstName, lastName);
+                var customer = new Customer(login, password, addressEmail, phoneNumber, Id, firstName, lastName);
                 customers.Add(customer);
             }
             return customers;
@@ -135,15 +136,17 @@ class ShopApp
         {
             foreach (var line in File.ReadLines(productsPathFile))
             {
-                string[] split = line.Split(",");
-                // Guid id = split[0];
-                // DateTimeOffset createdAt = split[1];
-                // DateTimeOffset updatedAt = split[2];
+                // string[] split = line.Split(";");
+                // Guid id = Guid.Parse(split[0]);
+                // Console.WriteLine(split[1]);
+                // DateTimeOffset createdAt = DateTimeOffset.Parse(split[1]);
+                // DateTimeOffset updatedAt = DateTimeOffset.Parse(split[2]);
                 // string name = split[3];
-                // string namePlural = split[5];
-                // decimal unitPrice = split[6];
+                // string namePlural = split[4];
+                // decimal unitPrice = decimal.Parse(split[5]);
                 
-                var product = new Product(new Guid(),new DateTimeOffset(), new DateTimeOffset(), "", "", new decimal());
+                // var product = new Product(id,createdAt, updatedAt, name, namePlural, unitPrice);
+                var product = new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "", "", new decimal());
                 products.Add(product);
             }
             return products;
@@ -160,8 +163,6 @@ class ShopApp
     
         String[] split = usersAsStringFromCsv.Split(";");
         
-        //List<User> _users = usersAsStringFromCsv.
-    
         return _customers;
     }
     
