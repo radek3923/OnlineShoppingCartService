@@ -1,4 +1,5 @@
 ﻿using System.IO.Pipes;
+using System.Text.RegularExpressions;
 using ShoppingCartServer.Enums;
 using ShoppingCartServer.Models;
 
@@ -68,23 +69,27 @@ class ShopApp
 
                     var customer = findCustomerInDatabase(login, password, _customers);
                     
-                    if(customer is not null)
+                    if (customer is not null)
                     {
+                        
                         writer.WriteLine("TRUE");// it means user is logged
                         writer.WriteLine("FALSE"); // it means user is not admin
+                        
+                        var products_string = await Task.Run((() => File.ReadAllText(productsPathFile)));
+                        writer.Write(products_string);
+                        writer.Flush();
+                        Console.WriteLine("Przeslano");
+                        
+                    } 
+                    else if (admin.Login.Equals(login) && admin.Password.Equals(password))
+                    {
+                            writer.WriteLine("TRUE");// it means user is logged
+                            writer.WriteLine("TRUE"); // it means user is admin
                     }
                     else
                     {
-                        if (admin.Login.Equals(login) && admin.Password.Equals(password))
-                        {
-                            writer.WriteLine("TRUE");// it means user is logged
-                            writer.WriteLine("TRUE"); // it means user is admin
-                        }
-                        else
-                        {
                             writer.WriteLine("FALSE");// it means user not found in database
                             writer.WriteLine("FALSE"); // it means user is not admin
-                        }
                     }
                     writer.Flush();
                     break;

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using System;
 using System.IO.Pipes;
+using System.Threading.Channels;
 using ShoppingCartUser.App;
 using ShoppingCartUser.Enums;
 
@@ -45,6 +46,13 @@ class UserApp
                     {
                         //show menu for casual user
                         Console.WriteLine("Panel klienta");
+                        Console.WriteLine("Otrzymano ");
+
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            Console.WriteLine(line);
+                        }
                     }
                     break;
                 case 1:
@@ -141,5 +149,14 @@ class UserApp
 
         return -1;
     }
+
+    // public void List<string> listProducts(string produts)
+    // {
+    //         produts.Split('#')
+    //         .Where(x => !string.IsNullOrEmpty(x))
+    //         .Select(x => x.Split(';'))
+    //         .Select(x => ($" {x[3], -10}:{ x[5], 5} "))
+    //         .ToList().ForEach(p => Console.WriteLine(p));
+    // }
     
 }
