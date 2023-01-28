@@ -23,7 +23,7 @@ class UserApp
 
         List<CartItem> cartUser = new List<CartItem>();
 
-        Operation option;
+        Operation operation;
 
         do
         {
@@ -32,23 +32,19 @@ class UserApp
             Console.WriteLine("1 - Rejestracja");
             Console.WriteLine("2 - Zakoncz");
 
-            option = askForOption();
+            operation = askForOption();
 
-            switch (option)
+            switch (operation)
             {
                 case Operation.Login:
-                    var tuple = isUserLogged(serverCommunication);
-                    //tuple.Item1 means isUserExist in database
-                    //tuple.Item2 means userType (customer or admin)
+                    UserType userType = getUserType(serverCommunication);
 
-                    if (tuple.Item1 && UserType.Admin.Equals(tuple.Item2))
+                    if (UserType.Admin.Equals(userType))
                     {
                         Console.WriteLine("Panel admina");
-                        //AdminMenu();
                     }
-                    else if (tuple.Item1)
+                    else if (UserType.Customer.Equals(userType))
                     {
-                        //show menu for casual user
                         Console.WriteLine("Panel klienta");
                         Console.WriteLine("Otrzymano ");
 
@@ -58,7 +54,10 @@ class UserApp
                             Console.WriteLine(line);
                         }
                     }
-
+                    else
+                    {
+                        Console.WriteLine("Błędne dane, spróbuj ponownie\n");
+                    }
                     break;
                 case Operation.Register:
                     RegistrationForm(serverCommunication);
@@ -69,12 +68,12 @@ class UserApp
                     Console.WriteLine("Niepoprawna wartość, spróbuj ponownie");
                     break;
             }
-        } while (option != Operation.Disconnect);
+        } while (operation != Operation.Disconnect);
 
         endTheProgram(pipeClient, serverCommunication);
     }
 
-    public static (bool, UserType) isUserLogged(ServerCommunication serverCommunication)
+    public static UserType getUserType(ServerCommunication serverCommunication)
     {
         Console.WriteLine("Podaj login: ");
         string login = Console.ReadLine();
@@ -83,25 +82,20 @@ class UserApp
         string password = Console.ReadLine();
 
         serverCommunication.SendData(Operation.Login, login, password);
-
-        //waiting for response from server
         string[] data = serverCommunication.ReadData();
 
         bool areLoginDataCorrect = bool.Parse(data[1]);
         bool isUserAdmin = bool.Parse(data[2]);
-
-
-        Console.WriteLine("areLoginDataCorrect: " + areLoginDataCorrect + ", isUserAdmin: " + isUserAdmin);
+        
 
         if (areLoginDataCorrect)
         {
-            if (isUserAdmin) return (true, UserType.Admin);
-            else return (true, UserType.Customer);
+            if (isUserAdmin) return UserType.Admin;
+            else return UserType.Customer;
         }
         else
         {
-            Console.WriteLine("Błędne dane, spróbuj ponownie\n");
-            return (false, UserType.None);
+            return UserType.None;
         }
     }
 

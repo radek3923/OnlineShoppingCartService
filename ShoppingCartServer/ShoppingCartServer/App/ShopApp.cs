@@ -1,15 +1,13 @@
 ﻿using System.IO.Pipes;
 using ShoppingCartServer.Enums;
+using ShoppingCartServer.FileOperations;
 using ShoppingCartServer.Models;
 using ShoppingCartUser.Communication;
 
 class ShopApp
 {
     private const string AppName = "Sklep internetowy";
-
-    private const string customersPathFile = @"customers.csv";
-    private const string productsPathFile = @"products.csv";
-
+    
 
     private static List<Customer> _customers;
     private static List<Product> _products;
@@ -19,16 +17,16 @@ class ShopApp
 
     public static async Task Main()
     {
+        FileManager fileManager = new FileManager();
+        
         var (importCustomersTask, importProductTask) =
-            (importCustomers(customersPathFile), importProducts(productsPathFile));
+            (fileManager.importCustomers(), fileManager.importProducts());
 
         _customers = await importCustomersTask;
         _products = await importProductTask;
-
-        // showAllList(_products);
-        // Console.WriteLine();
-        // showAllList(_customers);
-        // Console.WriteLine();
+        
+        showAllList(_products);
+        showAllList(_customers);
 
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
         var reader = new StreamReader(pipeServer);
@@ -66,7 +64,7 @@ class ShopApp
                         //it means user is logged and user is not admin
                         clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
 
-                        var products_string = await Task.Run((() => File.ReadAllText(productsPathFile)));
+                        // var products_string = await Task.Run((() => File.ReadAllText(productsPathFile)));
                         // writer.Write(products_string);
                         // writer.Flush();
                         // Console.WriteLine("Przeslano");
@@ -90,6 +88,11 @@ class ShopApp
                     Console.WriteLine(data[4]);
                     Console.WriteLine(data[5]);
                     Console.WriteLine(data[6]);
+
+                    //TODO validation data, then create new Customer
+                    Customer newCustomer = new Customer(data[1], data[2], data[3], data[4], new Guid(), data[5], data[6]);
+                    _customers.Add(newCustomer);
+                    //TODO save new Customer to excel
                     break;
             }
         }
@@ -104,69 +107,14 @@ class ShopApp
         return customer;
     }
 
-    public static Task<List<Customer>> importCustomers(String customersPathFile) => Task.Run(() =>
-    {
-        List<Customer> customers = new List<Customer>();
-        try
-        {
-            foreach (var line in File.ReadLines(customersPathFile))
-            {
-                string[] split = line.Split(",");
-                string login = split[0];
-                string password = split[1];
-                string addressEmail = split[2];
-                string phoneNumber = split[3];
-                Guid Id = Guid.Parse(split[4]);
-                string firstName = split[5];
-                string lastName = split[6];
-
-                var customer = new Customer(login, password, addressEmail, phoneNumber, Id, firstName, lastName);
-                customers.Add(customer);
-            }
-
-            return customers;
-        }
-        catch (IOException)
-        {
-            throw new Exception($"File {customersPathFile} doesnt exist");
-        }
-    });
-
-    public static Task<List<Product>> importProducts(String productsPathFile) => Task.Run(() =>
-    {
-        List<Product> products = new List<Product>();
-        try
-        {
-            foreach (var line in File.ReadLines(productsPathFile))
-            {
-                string[] split = line.Split(";");
-                Guid id = Guid.Parse(split[0]);
-                DateTimeOffset createdAt = DateTimeOffset.Parse(split[1]);
-                DateTimeOffset updatedAt = DateTimeOffset.Parse(split[2]);
-                string name = split[3];
-                string namePlural = split[4];
-                decimal unitPrice = decimal.Parse(split[5]);
-
-                var product = new Product(id, createdAt, updatedAt, name, namePlural, unitPrice);
-                products.Add(product);
-            }
-
-            return products;
-        }
-        catch (IOException)
-        {
-            throw new Exception($"File {productsPathFile} doesnt exist");
-        }
-    });
-
-    public static async Task<List<Customer>> readAllUsers(String userPathFile)
-    {
-        String usersAsStringFromCsv = await readCsvFile(customersPathFile);
-
-        String[] split = usersAsStringFromCsv.Split(";");
-
-        return _customers;
-    }
+    // public static async Task<List<Customer>> readAllUsers(String userPathFile)
+    // {
+    //     String usersAsStringFromCsv = await readCsvFile(customersPathFile);
+    //
+    //     String[] split = usersAsStringFromCsv.Split(";");
+    //
+    //     return _customers;
+    // }
 
     public static Task<string> readCsvFile(String pathFile) => Task.Run(() =>
     {
