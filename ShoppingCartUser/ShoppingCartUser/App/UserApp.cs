@@ -19,12 +19,12 @@ class UserApp
         Console.WriteLine("Oczekiwanie na połączenie z serwerem");
         pipeClient.Connect();
         Console.Clear();
-        
-        
+
+
         List<CartItem> cartUser = new List<CartItem>();
 
         Operation option;
-        
+
         do
         {
             Console.WriteLine("Wybierz opcje:");
@@ -37,7 +37,7 @@ class UserApp
             switch (option)
             {
                 case Operation.Login:
-                    var tuple = isUserLogged(writer, reader, serverCommunication);
+                    var tuple = isUserLogged(serverCommunication);
                     //tuple.Item1 means isUserExist in database
                     //tuple.Item2 means userType (customer or admin)
 
@@ -58,9 +58,10 @@ class UserApp
                             Console.WriteLine(line);
                         }
                     }
+
                     break;
                 case Operation.Register:
-                    RegistrationForm(writer, reader);
+                    RegistrationForm(serverCommunication);
                     break;
                 case Operation.Disconnect:
                     break;
@@ -70,34 +71,28 @@ class UserApp
             }
         } while (option != Operation.Disconnect);
 
-        endTheProgram(pipeClient, writer, reader);
-
+        endTheProgram(pipeClient, serverCommunication);
     }
-    
-    public static (bool, UserType) isUserLogged(StreamWriter writer, StreamReader reader, ServerCommunication serverCommunication)
+
+    public static (bool, UserType) isUserLogged(ServerCommunication serverCommunication)
     {
         Console.WriteLine("Podaj login: ");
-        var login = Console.ReadLine();
+        string login = Console.ReadLine();
 
         Console.WriteLine("Podaj haslo: ");
-        var password = Console.ReadLine();
-                    
-        serverCommunication.SendData(Operation.Login, login,password);
-        
-        // writer.WriteLine("1"); // 1 means user wants to login to server
-        // writer.WriteLine(login);
-        // writer.WriteLine(password);
-        // writer.Flush();
-                    
+        string password = Console.ReadLine();
+
+        serverCommunication.SendData(Operation.Login, login, password);
+
         //waiting for response from server
         string[] data = serverCommunication.ReadData();
-        
-        var areLoginDataCorrect = bool.Parse(data[1]);
-        var isUserAdmin = bool.Parse(data[2]);
-        
-        
+
+        bool areLoginDataCorrect = bool.Parse(data[1]);
+        bool isUserAdmin = bool.Parse(data[2]);
+
+
         Console.WriteLine("areLoginDataCorrect: " + areLoginDataCorrect + ", isUserAdmin: " + isUserAdmin);
-        
+
         if (areLoginDataCorrect)
         {
             if (isUserAdmin) return (true, UserType.Admin);
@@ -109,42 +104,40 @@ class UserApp
             return (false, UserType.None);
         }
     }
-    public static void RegistrationForm(StreamWriter writer, StreamReader reader)
+
+    public static void RegistrationForm(ServerCommunication serverCommunication)
     {
-        string login;
-        string password;
-        string addressEmail;
-        string phoneNumber;
-        string firstName;
-        string lastName;
-        
         Console.WriteLine("Podaj login: ");
-        login = Console.ReadLine();
+        var login = Console.ReadLine();
 
         Console.WriteLine("Podaj haslo: ");
-        password = Console.ReadLine();
-        
+        var password = Console.ReadLine();
+
         Console.WriteLine("Podaj adres email: ");
-        addressEmail = Console.ReadLine();
-        
+        var addressEmail = Console.ReadLine();
+
         Console.WriteLine("Podaj numer telefonu: ");
-        phoneNumber = Console.ReadLine();
-        
+        var phoneNumber = Console.ReadLine();
+
         Console.WriteLine("Podaj imie: ");
-        firstName = Console.ReadLine();
-        
+        var firstName = Console.ReadLine();
+
         Console.WriteLine("Podaj nazwisko: ");
-        lastName = Console.ReadLine();
-        
-        writer.WriteLine("2");
-        writer.WriteLine(login);
-        writer.WriteLine(password);
-        writer.WriteLine(addressEmail);
-        writer.WriteLine(phoneNumber);
-        writer.WriteLine(firstName);
-        writer.WriteLine(lastName);
-        writer.Flush();
-        
+        var lastName = Console.ReadLine();
+
+
+        if (login != null && password != null && addressEmail != null && phoneNumber != null && firstName != null &&
+            lastName != null)
+        {
+            serverCommunication.SendData(Operation.Register, login, password, addressEmail, phoneNumber, firstName,
+                lastName);
+        }
+        else
+        {
+            throw new Exception("Error while entering data");
+        }
+            
+
     }
 
     public static void CustomerMenu()
@@ -155,7 +148,7 @@ class UserApp
         Console.WriteLine("1 - Wyświetl produkt");
         Console.WriteLine("2 - Wyloguj");
     }
-    
+
     public static void AdminMenu()
     {
         Console.Clear();
@@ -176,14 +169,11 @@ class UserApp
         else return Operation.None;
     }
 
-    public static int endTheProgram(NamedPipeClientStream pipeClient,StreamWriter writer, StreamReader reader)
+    public static void endTheProgram(NamedPipeClientStream pipeClient, ServerCommunication serverCommunication)
     {
         Console.WriteLine("Trwa wyłączanie programu ");
-        writer.WriteLine("-1"); //means user wants to disconect from the server
-        writer.Flush();
+        serverCommunication.SendData(Operation.Disconnect);
         pipeClient.Close();
-
-        return -1;
     }
 
     // public void List<string> listProducts(string produts)
@@ -194,5 +184,4 @@ class UserApp
     //         .Select(x => ($" {x[3], -10}:{ x[5], 5} "))
     //         .ToList().ForEach(p => Console.WriteLine(p));
     // }
-    
 }

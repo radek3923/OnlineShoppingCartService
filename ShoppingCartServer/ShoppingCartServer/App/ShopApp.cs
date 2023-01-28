@@ -63,39 +63,33 @@ class ShopApp
 
                     if (customer is not null)
                     {
-                        // writer.WriteLine("TRUE");// it means user is logged
-                        // writer.WriteLine("FALSE"); // it means user is not admin
+                        //it means user is logged and user is not admin
                         clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
 
                         var products_string = await Task.Run((() => File.ReadAllText(productsPathFile)));
-                        writer.Write(products_string);
-                        writer.Flush();
-                        Console.WriteLine("Przeslano");
+                        // writer.Write(products_string);
+                        // writer.Flush();
+                        // Console.WriteLine("Przeslano");
                     }
                     else if (admin.Login.Equals(login) && admin.Password.Equals(password))
                     {
-                        // writer.WriteLine("TRUE"); // it means user is logged
-                        // writer.WriteLine("TRUE"); // it means user is admin
+                        //it means user is logged and user is admin
                         clientCommunication.SendData(Operation.Login, "TRUE", "TRUE");
                     }
                     else
                     {
-                        // writer.WriteLine("FALSE"); // it means user not found in database
-                        // writer.WriteLine("FALSE"); // it means user is not admin
+                        // it means user not found in database and user is not admin
                         clientCommunication.SendData(Operation.Login, "FALSE", "FALSE");
                     }
-
-                    writer.Flush();
                     break;
                 case Operation.Register:
                     Console.WriteLine("Uzytkownik wybral rejestracje");
-                    Console.WriteLine(reader.ReadLine());
-                    Console.WriteLine(reader.ReadLine());
-                    Console.WriteLine(reader.ReadLine());
-                    Console.WriteLine(reader.ReadLine());
-                    Console.WriteLine(reader.ReadLine());
-                    Console.WriteLine(reader.ReadLine());
-
+                    Console.WriteLine(data[1]);
+                    Console.WriteLine(data[2]);
+                    Console.WriteLine(data[3]);
+                    Console.WriteLine(data[4]);
+                    Console.WriteLine(data[5]);
+                    Console.WriteLine(data[6]);
                     break;
             }
         }
@@ -154,7 +148,6 @@ class ShopApp
                 decimal unitPrice = decimal.Parse(split[5]);
 
                 var product = new Product(id, createdAt, updatedAt, name, namePlural, unitPrice);
-                //var product = new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "", "", new decimal());
                 products.Add(product);
             }
 
