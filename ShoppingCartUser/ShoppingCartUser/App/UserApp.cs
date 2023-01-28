@@ -1,8 +1,4 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using System;
-using System.IO.Pipes;
-using System.Threading.Channels;
-using ShoppingCartUser;
+﻿using System.IO.Pipes;
 using ShoppingCartUser.App;
 using ShoppingCartUser.Communication;
 using ShoppingCartUser.Enums;
@@ -46,18 +42,18 @@ class UserApp
                     else if (UserType.Customer.Equals(userType))
                     {
                         Console.WriteLine("Panel klienta");
-                        Console.WriteLine("Otrzymano ");
 
-                        string line;
-                        while ((line = reader.ReadLine()) != null)
-                        {
-                            Console.WriteLine(line);
-                        }
+                        // list of produts sent by server
+                        string[] data = serverCommunication.ReadData();
+
+                        var products = listProducts(data);
+                        CustomerMenu(products);
                     }
                     else
                     {
                         Console.WriteLine("Błędne dane, spróbuj ponownie\n");
                     }
+
                     break;
                 case Operation.Register:
                     RegistrationForm(serverCommunication);
@@ -86,7 +82,7 @@ class UserApp
 
         bool areLoginDataCorrect = bool.Parse(data[1]);
         bool isUserAdmin = bool.Parse(data[2]);
-        
+
 
         if (areLoginDataCorrect)
         {
@@ -130,17 +126,87 @@ class UserApp
         {
             throw new Exception("Error while entering data");
         }
-            
-
     }
 
-    public static void CustomerMenu()
+    public static void CustomerMenu(List<CartItem> _productsInShop)
     {
-        Console.Clear();
-        Console.WriteLine("Wybierz opcje:");
-        Console.WriteLine("0 - Kup produkt");
-        Console.WriteLine("1 - Wyświetl produkt");
-        Console.WriteLine("2 - Wyloguj");
+        var shoppingCart = new List<CartItem>();
+        int option = -1;
+        do
+        {
+            Console.WriteLine("Wybierz opcje:");
+            Console.WriteLine("0 - Wyswietl liste dostepnych produktow");
+            Console.WriteLine("1 - Dodaj produkt do koszyka");
+            Console.WriteLine("2 - Zmien liczbe produktow");
+            Console.WriteLine("3 - Wyswietl koszyk");
+            Console.WriteLine("4 - Wyloguj");
+            option = askForOption2();
+            switch (option)
+            {
+                case 0:
+                    _productsInShop.ForEach(p => Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł ")));
+
+                    break;
+                case 1:
+                    // wyszukaj produkt
+                    Console.WriteLine("Podaj produkt, ktory dodac do koszyka");
+                    string chosenProduct = Console.ReadLine();
+                    Console.WriteLine("Ile sztuk produktu dodac do koszyka");
+                    
+                    int quantityProduct = int.TryParse(Console.ReadLine(), out var myInt) ? myInt : 0;
+                    Console.WriteLine(quantityProduct);
+                    
+                    if (quantityProduct <= 0)
+                    {
+                        Console.WriteLine("Błędna wartość");
+                        break;
+                    }
+
+                    // zawsze podmienia
+                    if (shoppingCart.Where(p => (p.Name == chosenProduct)).Count() >= 1)
+                    {
+                        Console.WriteLine("Wchodze tu 1");
+                        foreach (var p in shoppingCart)
+                        {
+                            if (p.Name == chosenProduct)
+                            {
+                                Console.WriteLine("Wchodze tu 2");
+                                p.Quantity += quantityProduct;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Wchodze tu 3");
+                        try
+                        {
+                            var wynik = _productsInShop.Where(p => (p.Name == chosenProduct))
+                                .Select(p => (p.CartId, p.Name, p.NamePlural, p.UnitPrice)).First();
+                            shoppingCart.Add(new CartItem(wynik.Item1, wynik.Item2, wynik.Item3, wynik.Item4,
+                                quantityProduct));
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Taki produkt nie wystepuje w sklepie");
+                        }
+                    }
+
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    // zmienic wyswietlanie
+                    //TODO if shopping cart is empty tell it to customer
+                    shoppingCart.RemoveAll(p => p.Quantity == 0);
+                    shoppingCart.ForEach(p =>
+                        Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł : {p.Quantity,5} sztuk")));
+
+                    break;
+                case 4:
+                    Console.WriteLine("Wylogowywanie z konta");
+                    break;
+            }
+        } while (option != 4);
     }
 
     public static void AdminMenu()
@@ -163,6 +229,22 @@ class UserApp
         else return Operation.None;
     }
 
+    public static int askForOption2()
+    {
+        int option;
+
+        try
+        {
+            option = int.Parse(Console.ReadLine()!);
+        }
+        catch (FormatException)
+        {
+            option = -1;
+        }
+
+        return option;
+    }
+
     public static void endTheProgram(NamedPipeClientStream pipeClient, ServerCommunication serverCommunication)
     {
         Console.WriteLine("Trwa wyłączanie programu ");
@@ -170,12 +252,29 @@ class UserApp
         pipeClient.Close();
     }
 
-    // public void List<string> listProducts(string produts)
-    // {
-    //         produts.Split('#')
-    //         .Where(x => !string.IsNullOrEmpty(x))
-    //         .Select(x => x.Split(';'))
-    //         .Select(x => ($" {x[3], -10}:{ x[5], 5} "))
-    //         .ToList().ForEach(p => Console.WriteLine(p));
-    // }
+    public static List<CartItem> listProducts(string[] lines)
+    {
+        var ProductList = new List<CartItem>();
+
+        // last elemnt of string produts in "\n" char
+        for (var i = 0; i < lines.Length - 1; i++)
+        {
+            try
+            {
+                string[] split = lines[i].Split(";");
+                Guid Id = Guid.Parse(split[0]); // naprawic
+                string Name = split[3];
+                string NamePlural = split[4];
+                decimal UnitPrice = Decimal.Parse(split[5]);
+
+                ProductList.Add(new CartItem(Id, Name, NamePlural, UnitPrice, Int32.MaxValue));
+            }
+            catch
+            {
+                continue;
+            }
+        }
+
+        return ProductList;
+    }
 }

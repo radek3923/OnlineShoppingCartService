@@ -1,4 +1,5 @@
 ﻿using System.IO.Pipes;
+using System.Text.RegularExpressions;
 using ShoppingCartServer.Enums;
 using ShoppingCartServer.FileOperations;
 using ShoppingCartServer.Models;
@@ -59,13 +60,22 @@ class ShopApp
 
                     if (customer is not null)
                     {
-                        //it means user is logged and user is not admin
+                        //it means user is Customer
                         clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
+                        
+                        var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
+                        productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
+
+                        clientCommunication.SendData(Operation.SendingProducts, productsAsString);
+                        Console.WriteLine("Przeslano");
+                        
+                        
+                       
                         
                     }
                     else if (admin.Login.Equals(login) && admin.Password.Equals(password))
                     {
-                        //it means user is logged and user is admin
+                        //it means user is Admin
                         clientCommunication.SendData(Operation.Login, "TRUE", "TRUE");
                     }
                     else

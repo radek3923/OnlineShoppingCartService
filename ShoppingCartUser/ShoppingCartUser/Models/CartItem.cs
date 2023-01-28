@@ -7,4 +7,13 @@ public class CartItem
     public string NamePlural { get; set; }
     public decimal UnitPrice { get; set; }
     public int Quantity { get; set; }
+    
+    public CartItem(Guid cartId, string name, string namePlural, decimal unitPrice, int quantity)
+    {
+        CartId = cartId;
+        Name = name;
+        NamePlural = namePlural;
+        UnitPrice = unitPrice;
+        Quantity = quantity;
+    }
 }

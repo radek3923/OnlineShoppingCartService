@@ -5,5 +5,6 @@ public enum Operation
     Login,
     Register,
     Disconnect,
-    Buy
+    Buy,
+    SendingProducts
 }
