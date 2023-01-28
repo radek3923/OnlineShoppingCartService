@@ -4,11 +4,13 @@ namespace ShoppingCartUser.Communication;
 
 public class ClientCommunication
 {
+    public State State { get; set; }
     private StreamReader reader;
     private StreamWriter writer;
 
-    public ClientCommunication(StreamReader reader, StreamWriter writer)
+    public ClientCommunication(State state, StreamReader reader, StreamWriter writer)
     {
+        State = state;
         this.reader = reader;
         this.writer = writer;
     }

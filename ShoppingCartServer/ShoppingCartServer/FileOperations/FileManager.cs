@@ -27,7 +27,6 @@ public class FileManager
                 var customer = new Customer(login, password, addressEmail, phoneNumber, Id, firstName, lastName);
                 customers.Add(customer);
             }
-            Thread.Sleep(5000);
             return customers;
         }
         catch (IOException)
@@ -54,7 +53,6 @@ public class FileManager
                 var product = new Product(id, createdAt, updatedAt, name, namePlural, unitPrice);
                 products.Add(product);
             }
-            Thread.Sleep(5000);
             return products;
         }
         catch (IOException)

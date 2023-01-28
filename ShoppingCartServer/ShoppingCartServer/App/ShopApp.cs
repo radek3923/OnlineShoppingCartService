@@ -8,10 +8,8 @@ class ShopApp
 {
     private const string AppName = "Sklep internetowy";
     
-
     private static List<Customer> _customers;
     private static List<Product> _products;
-
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
 
 
@@ -25,20 +23,20 @@ class ShopApp
         _customers = await importCustomersTask;
         _products = await importProductTask;
         
-        showAllList(_products);
-        showAllList(_customers);
+        // showAllList(_products);
+        // showAllList(_customers);
 
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
         var reader = new StreamReader(pipeServer);
         var writer = new StreamWriter(pipeServer);
-        ClientCommunication clientCommunication = new ClientCommunication(reader, writer);
+        ClientCommunication clientCommunication = new ClientCommunication(State.Disconnected,reader, writer);
         Console.WriteLine("Oczekiwanie na połączenie z klientem");
         pipeServer.WaitForConnection();
         Console.Clear();
         Console.WriteLine("Połączono z klientem");
-        State stateConnection = State.Connected;
+        clientCommunication.State = State.Connected;
 
-        while (State.Connected.Equals(stateConnection))
+        while (State.Connected.Equals(clientCommunication.State))
         {
             string[] data = clientCommunication.ReadData();
             Operation operation = Enum.Parse<Operation>(data[0]);
@@ -47,7 +45,7 @@ class ShopApp
             {
                 case Operation.Disconnect:
                     Console.WriteLine("Trwa wyłączanie serwera ");
-                    stateConnection = State.Disconnected;
+                    clientCommunication.State = State.Disconnected;
                     break;
                 case Operation.Login:
                     Console.WriteLine("Wybrano logowanie");
@@ -63,11 +61,7 @@ class ShopApp
                     {
                         //it means user is logged and user is not admin
                         clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
-
-                        // var products_string = await Task.Run((() => File.ReadAllText(productsPathFile)));
-                        // writer.Write(products_string);
-                        // writer.Flush();
-                        // Console.WriteLine("Przeslano");
+                        
                     }
                     else if (admin.Login.Equals(login) && admin.Password.Equals(password))
                     {
@@ -106,29 +100,6 @@ class ShopApp
             .FirstOrDefault() ?? null;
         return customer;
     }
-
-    // public static async Task<List<Customer>> readAllUsers(String userPathFile)
-    // {
-    //     String usersAsStringFromCsv = await readCsvFile(customersPathFile);
-    //
-    //     String[] split = usersAsStringFromCsv.Split(";");
-    //
-    //     return _customers;
-    // }
-
-    public static Task<string> readCsvFile(String pathFile) => Task.Run(() =>
-    {
-        Thread.Sleep(1000);
-        try
-        {
-            return File.ReadAllText(pathFile);
-        }
-        catch (IOException e)
-        {
-            Console.WriteLine("File {0} doesnt exist. Error message: {1}", pathFile, e.Source);
-            return "";
-        }
-    });
 
     public static void showAllList<T>(List<T> list)
     {
