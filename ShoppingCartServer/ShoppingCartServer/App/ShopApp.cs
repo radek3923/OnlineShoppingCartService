@@ -1,108 +1,116 @@
 ﻿using System.IO.Pipes;
-using System.Text.RegularExpressions;
 using ShoppingCartServer.Enums;
 using ShoppingCartServer.Models;
+using ShoppingCartUser.Communication;
 
 class ShopApp
 {
     private const string AppName = "Sklep internetowy";
-    
+
     private const string customersPathFile = @"customers.csv";
     private const string productsPathFile = @"products.csv";
-    
+
 
     private static List<Customer> _customers;
     private static List<Product> _products;
-    
+
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
-    
+
 
     public static async Task Main()
     {
         var (importCustomersTask, importProductTask) =
             (importCustomers(customersPathFile), importProducts(productsPathFile));
-        
+
         _customers = await importCustomersTask;
         _products = await importProductTask;
-        
+
         // showAllList(_products);
         // Console.WriteLine();
         // showAllList(_customers);
         // Console.WriteLine();
 
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
-
+        var reader = new StreamReader(pipeServer);
+        var writer = new StreamWriter(pipeServer);
+        ClientCommunication clientCommunication = new ClientCommunication(reader, writer);
         Console.WriteLine("Oczekiwanie na połączenie z klientem");
         pipeServer.WaitForConnection();
         Console.Clear();
         Console.WriteLine("Połączono z klientem");
-        
-        
-        
         State stateConnection = State.Connected;
-        
-        var reader = new StreamReader(pipeServer);
-        var writer = new StreamWriter(pipeServer);
-        
+
         while (State.Connected.Equals(stateConnection))
         {
-            var option = int.Parse(reader.ReadLine()!);
-            switch (option)
+            string[] data = clientCommunication.ReadData();
+            Operation operation = Enum.Parse<Operation>(data[0]);
+
+            switch (operation)
             {
-                //Disconect
-                case -1:
+                case Operation.Disconnect:
                     Console.WriteLine("Trwa wyłączanie serwera ");
                     stateConnection = State.Disconnected;
                     break;
-                //Login
-                case 1:
+                case Operation.Login:
+                    Console.WriteLine("Wybrano logowanie");
+                    var login = data[1];
+                    var password = data[2];
 
-                    var login = reader.ReadLine();
-                    var password = reader.ReadLine();
                     Console.WriteLine("Login: " + login);
                     Console.WriteLine("Haslo: " + password);
 
                     var customer = findCustomerInDatabase(login, password, _customers);
-                    
+
                     if (customer is not null)
                     {
-                        
-                        writer.WriteLine("TRUE");// it means user is logged
-                        writer.WriteLine("FALSE"); // it means user is not admin
-                        
+                        // writer.WriteLine("TRUE");// it means user is logged
+                        // writer.WriteLine("FALSE"); // it means user is not admin
+                        clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
+
                         var products_string = await Task.Run((() => File.ReadAllText(productsPathFile)));
                         writer.Write(products_string);
                         writer.Flush();
                         Console.WriteLine("Przeslano");
-                        
-                    } 
+                    }
                     else if (admin.Login.Equals(login) && admin.Password.Equals(password))
                     {
-                            writer.WriteLine("TRUE");// it means user is logged
-                            writer.WriteLine("TRUE"); // it means user is admin
+                        // writer.WriteLine("TRUE"); // it means user is logged
+                        // writer.WriteLine("TRUE"); // it means user is admin
+                        clientCommunication.SendData(Operation.Login, "TRUE", "TRUE");
                     }
                     else
                     {
-                            writer.WriteLine("FALSE");// it means user not found in database
-                            writer.WriteLine("FALSE"); // it means user is not admin
+                        // writer.WriteLine("FALSE"); // it means user not found in database
+                        // writer.WriteLine("FALSE"); // it means user is not admin
+                        clientCommunication.SendData(Operation.Login, "FALSE", "FALSE");
                     }
+
                     writer.Flush();
                     break;
-                //Register
-                case 2:
+                case Operation.Register:
+                    Console.WriteLine("Uzytkownik wybral rejestracje");
+                    Console.WriteLine(reader.ReadLine());
+                    Console.WriteLine(reader.ReadLine());
+                    Console.WriteLine(reader.ReadLine());
+                    Console.WriteLine(reader.ReadLine());
+                    Console.WriteLine(reader.ReadLine());
+                    Console.WriteLine(reader.ReadLine());
+
                     break;
             }
         }
+
         pipeServer.Close();
     }
 
     public static Customer findCustomerInDatabase(String login, String password, List<Customer> _customers)
     {
-        var customer = _customers.Where( (customer) => (customer.Login == login && customer.Password == password)).FirstOrDefault() ?? null;
+        var customer = _customers.Where((customer) => (customer.Login == login && customer.Password == password))
+            .FirstOrDefault() ?? null;
         return customer;
     }
-    
-    public static Task<List<Customer>> importCustomers(String customersPathFile) => Task.Run( () =>
+
+    public static Task<List<Customer>> importCustomers(String customersPathFile) => Task.Run(() =>
     {
         List<Customer> customers = new List<Customer>();
         try
@@ -117,19 +125,20 @@ class ShopApp
                 Guid Id = Guid.Parse(split[4]);
                 string firstName = split[5];
                 string lastName = split[6];
-                
+
                 var customer = new Customer(login, password, addressEmail, phoneNumber, Id, firstName, lastName);
                 customers.Add(customer);
             }
+
             return customers;
         }
-        catch(IOException)
+        catch (IOException)
         {
             throw new Exception($"File {customersPathFile} doesnt exist");
         }
     });
-    
-    public static Task<List<Product>> importProducts(String productsPathFile) => Task.Run( () =>
+
+    public static Task<List<Product>> importProducts(String productsPathFile) => Task.Run(() =>
     {
         List<Product> products = new List<Product>();
         try
@@ -143,29 +152,30 @@ class ShopApp
                 string name = split[3];
                 string namePlural = split[4];
                 decimal unitPrice = decimal.Parse(split[5]);
-                
-                var product = new Product(id,createdAt, updatedAt, name, namePlural, unitPrice);
+
+                var product = new Product(id, createdAt, updatedAt, name, namePlural, unitPrice);
                 //var product = new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "", "", new decimal());
                 products.Add(product);
             }
+
             return products;
         }
-        catch(IOException)
+        catch (IOException)
         {
             throw new Exception($"File {productsPathFile} doesnt exist");
         }
     });
-    
+
     public static async Task<List<Customer>> readAllUsers(String userPathFile)
     {
         String usersAsStringFromCsv = await readCsvFile(customersPathFile);
-    
+
         String[] split = usersAsStringFromCsv.Split(";");
-        
+
         return _customers;
     }
-    
-    public static Task<string> readCsvFile(String pathFile) => Task.Run( () =>
+
+    public static Task<string> readCsvFile(String pathFile) => Task.Run(() =>
     {
         Thread.Sleep(1000);
         try
@@ -179,9 +189,9 @@ class ShopApp
         }
     });
 
-    public static void showAllList<T> (List<T> list)
+    public static void showAllList<T>(List<T> list)
     {
-        foreach (var item  in list)
+        foreach (var item in list)
         {
             Console.WriteLine(item);
         }
