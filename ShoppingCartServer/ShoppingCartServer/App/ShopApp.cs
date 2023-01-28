@@ -24,6 +24,11 @@ class ShopApp
         
         _customers = await importCustomersTask;
         _products = await importProductTask;
+        
+        // showAllList(_products);
+        // Console.WriteLine();
+        // showAllList(_customers);
+        // Console.WriteLine();
 
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
 
@@ -32,17 +37,7 @@ class ShopApp
         Console.Clear();
         Console.WriteLine("Połączono z klientem");
         
-        Console.WriteLine("Klienci:\n");
-        foreach (var customer in _customers)
-        {
-            Console.WriteLine(customer.ToString());
-        }
         
-        Console.WriteLine("\nProdukty:\n");
-        foreach (var product in _products)
-        {
-            Console.WriteLine(product.ToString());
-        }
         
         State stateConnection = State.Connected;
         
@@ -141,17 +136,16 @@ class ShopApp
         {
             foreach (var line in File.ReadLines(productsPathFile))
             {
-                // string[] split = line.Split(";");
-                // Guid id = Guid.Parse(split[0]);
-                // Console.WriteLine(split[1]);
-                // DateTimeOffset createdAt = DateTimeOffset.Parse(split[1]);
-                // DateTimeOffset updatedAt = DateTimeOffset.Parse(split[2]);
-                // string name = split[3];
-                // string namePlural = split[4];
-                // decimal unitPrice = decimal.Parse(split[5]);
+                string[] split = line.Split(";");
+                Guid id = Guid.Parse(split[0]);
+                DateTimeOffset createdAt = DateTimeOffset.Parse(split[1]);
+                DateTimeOffset updatedAt = DateTimeOffset.Parse(split[2]);
+                string name = split[3];
+                string namePlural = split[4];
+                decimal unitPrice = decimal.Parse(split[5]);
                 
-                // var product = new Product(id,createdAt, updatedAt, name, namePlural, unitPrice);
-                var product = new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "", "", new decimal());
+                var product = new Product(id,createdAt, updatedAt, name, namePlural, unitPrice);
+                //var product = new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "", "", new decimal());
                 products.Add(product);
             }
             return products;
@@ -184,4 +178,12 @@ class ShopApp
             return "";
         }
     });
+
+    public static void showAllList<T> (List<T> list)
+    {
+        foreach (var item  in list)
+        {
+            Console.WriteLine(item);
+        }
+    }
 }
