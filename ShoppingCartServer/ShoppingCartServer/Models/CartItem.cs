@@ -2,17 +2,16 @@
 
 public class CartItem
 {
+    public Guid CartId { get; set; }
     public Guid CartItemId { get; set; }
-    public Cart Cart { get; set; }
-
-    public Product Product { get; set; }
+    public Guid ProductId { get; set; }
     public int Quantity { get; set; }
 
-    public CartItem(Guid cartItemId, Cart cart, Product product, int quantity)
+    public CartItem(Guid cartId, Guid cartItemId, Guid productId, int quantity)
     {
+        CartId = cartId;
         CartItemId = cartItemId;
-        Cart = cart;
-        Product = product;
+        ProductId = productId;
         Quantity = quantity;
     }
 }

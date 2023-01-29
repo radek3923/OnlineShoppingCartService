@@ -13,6 +13,7 @@ class ShopApp
     
     private static List<Customer> _customers;
     private static List<Product> _products;
+    private static List<Cart> _historyShoppingCarts;
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     private static Customer loggedCustomer;
 
@@ -21,17 +22,19 @@ class ShopApp
         FileManager fileManager = new FileManager();
         DataGenerator dataGenerator = new DataGenerator();
         
-        var (importCustomersTask, importProductTask) =
-            (fileManager.importCustomers(), fileManager.importProducts());
+        var (importCustomersTask, importProductTask, importShoppingCartsHistoryTask) =
+            (fileManager.importCustomers(), fileManager.importProducts(), fileManager.importShoppingCartsHistory());
         
         _customers = await importCustomersTask;
         _products = await importProductTask;
+        _historyShoppingCarts = await importShoppingCartsHistoryTask;
         
          // fileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
          // fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
          
          // showAllList(_products);
          // showAllList(_customers);
+         showAllList(_historyShoppingCarts);
          
          // Console.WriteLine(dataGenerator.getNewGuID());
          // Console.WriteLine(dataGenerator.GetActualDateTimeOffset());

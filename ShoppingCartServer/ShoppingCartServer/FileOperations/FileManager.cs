@@ -7,6 +7,7 @@ public class FileManager
 {
     private const string customersPathFile = @"customers.csv";
     private const string productsPathFile = @"products.csv";
+    private const string shoppingHistoryPathFile = @"shoppingCartsHistory.csv";
 
 
     public Task<List<Customer>> importCustomers() => Task.Run(() =>
@@ -73,7 +74,56 @@ public class FileManager
             throw new Exception($"File {productsPathFile} doesnt exist");
         }
     });
+    
+    public Task<List<Cart>> importShoppingCartsHistory() => Task.Run(() =>
+    {
+        List<Cart> carts = new List<Cart>();
+        try
+        {
+            foreach (var line in File.ReadLines(shoppingHistoryPathFile))
+            {
+                List<CartItem> cartItems = new List<CartItem>();
+                
+                string[] split = line.Split(";");
+                
+                //split[] is CartId ; CartCreatedAt ; CartUpdatedAt ; CustomerId ; List<CartItem>
+                Guid cartId = Guid.Parse(split[0]);
+                DateTimeOffset cartCreatedAt = DateTimeOffset.Parse(split[1]);
+                DateTimeOffset cartUpdatedAt = DateTimeOffset.Parse(split[2]);
+                Guid customerId = Guid.Parse(split[3]);
+                
+                //split[4] is CartId # CartItemId # ProductId # Quantity    $   second CartItem and etc
+                string listOfCartItemsAsString = split[4];
+                
+                string[] cartItemsAsString = listOfCartItemsAsString.Split("$");
 
+                foreach (var cartItemAsString in cartItemsAsString)
+                {
+                    string[] items = cartItemAsString.Split("#");
+                    
+                    Guid cartId2 = Guid.Parse(items[0]);
+                    Guid cartItemId = Guid.Parse(items[1]);
+                    Guid productId = Guid.Parse(items[2]);
+                    int quantity = int.Parse(items[3]);
+            
+                    CartItem cartItem = new CartItem(cartId2, cartItemId, productId, quantity);
+                    cartItems.Add(cartItem);
+                }
+
+                var cart = new Cart(cartId, cartCreatedAt, cartUpdatedAt , customerId, cartItems );
+                carts.Add(cart);
+            }
+
+            return carts;
+        }
+        catch (IOException)
+        {
+            throw new Exception($"File {shoppingHistoryPathFile} doesnt exist");
+        }
+    });
+
+    
+    
     public string objectToCsv<T>(T obj)
     {
         var properties = from property in typeof(T).GetProperties()
