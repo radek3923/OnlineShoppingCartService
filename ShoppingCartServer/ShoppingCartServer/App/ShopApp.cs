@@ -29,12 +29,19 @@ class ShopApp
         _products = await importProductTask;
         _historyShoppingCarts = await importShoppingCartsHistoryTask;
         
-         // fileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
-         // fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
+        // List<CartItem> cartItems = new List<CartItem>();
+        // CartItem cartItem1 = new CartItem(new Guid(), new Guid(), 0);
+        // CartItem cartItem2 = new CartItem(new Guid(), new Guid(), 0);
+        // cartItems.Add(cartItem1);
+        // cartItems.Add(cartItem2);
+        
+        // fileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
+        // fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
+        //fileManager.saveCartToDatabase(new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), new Guid(), cartItems ));
          
          // showAllList(_products);
          // showAllList(_customers);
-         showAllList(_historyShoppingCarts);
+         //showAllList(_historyShoppingCarts);
          
          // Console.WriteLine(dataGenerator.getNewGuID());
          // Console.WriteLine(dataGenerator.GetActualDateTimeOffset());

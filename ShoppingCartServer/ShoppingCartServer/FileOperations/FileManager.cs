@@ -92,7 +92,7 @@ public class FileManager
                 DateTimeOffset cartUpdatedAt = DateTimeOffset.Parse(split[2]);
                 Guid customerId = Guid.Parse(split[3]);
                 
-                //split[4] is CartId # CartItemId # ProductId # Quantity    $   second CartItem and etc
+                //split[4] is CartItemId # ProductId # Quantity    $   second CartItem and etc
                 string listOfCartItemsAsString = split[4];
                 
                 string[] cartItemsAsString = listOfCartItemsAsString.Split("$");
@@ -120,8 +120,6 @@ public class FileManager
             throw new Exception($"File {shoppingHistoryPathFile} doesnt exist");
         }
     });
-
-    
     
     public string objectToCsv<T>(T obj)
     {
@@ -164,5 +162,38 @@ public class FileManager
             Console.WriteLine("Wystąpił błąd podczas zapisywania obiektu do bazy");
         }
         return false;
+    }
+
+    public bool saveCartToDatabase(Cart cart)
+    {
+        try
+        {
+            File.AppendAllText(shoppingHistoryPathFile, cartToCsv(cart));
+            Console.WriteLine("Poprawnie zapisano obiekt do bazy");
+            return true;
+        }
+        catch
+        {
+            Console.WriteLine("Wystąpił błąd podczas zapisywania obiektu do bazy");
+        }
+        return false;
+    }
+
+    public static string cartToCsv(Cart cart)
+    {
+        string s1 = ";";
+        string s2 = "#";
+        string s3 = "$";
+        
+        string objectInCsv = cart.Id + s1 + cart.CreatedAt + s1 + cart.UpdatedAt + s1 + cart.CustomerId + s1;
+
+        foreach (var orderItem in cart.Products)
+        {
+            objectInCsv += orderItem.CartItemId + s2 + orderItem.ProductId + s2 + orderItem.Quantity;
+            objectInCsv += s3;
+        }
+        objectInCsv = objectInCsv.Remove(objectInCsv.Length-1) + "\n";
+        
+        return objectInCsv;
     }
 }
