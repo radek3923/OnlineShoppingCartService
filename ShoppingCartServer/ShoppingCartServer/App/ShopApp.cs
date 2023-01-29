@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using ShoppingCartServer.Enums;
 using ShoppingCartServer.FileOperations;
 using ShoppingCartServer.Models;
+using ShoppingCartServer.Utils.Generators;
 using ShoppingCartServer.Utils.Validators;
 using ShoppingCartUser.Communication;
 
@@ -18,6 +19,7 @@ class ShopApp
     public static async Task Main()
     {
         FileManager fileManager = new FileManager();
+        DataGenerator dataGenerator = new DataGenerator();
         
         var (importCustomersTask, importProductTask) =
             (fileManager.importCustomers(), fileManager.importProducts());
@@ -28,8 +30,11 @@ class ShopApp
          // fileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
          // fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
          
-         showAllList(_products);
-         showAllList(_customers);
+         // showAllList(_products);
+         // showAllList(_customers);
+         
+         // Console.WriteLine(dataGenerator.getNewGuID());
+         // Console.WriteLine(dataGenerator.GetActualDateTimeOffset());
 
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
         var reader = new StreamReader(pipeServer);
@@ -99,7 +104,7 @@ class ShopApp
 
                     if (dataValidator.isDataValid(loginNew, addressEmailNew, phoneNumberNew, _customers))
                     {
-                        Customer newCustomer = new Customer(loginNew, passwordNew, addressEmailNew, phoneNumberNew, new Guid(), firstNameNew, lastNameNew );
+                        Customer newCustomer = new Customer(loginNew, passwordNew, addressEmailNew, phoneNumberNew, dataGenerator.getNewGuID(), firstNameNew, lastNameNew );
                         _customers.Add(newCustomer);
                         fileManager.saveObjectToDatabase(newCustomer);
                     }
