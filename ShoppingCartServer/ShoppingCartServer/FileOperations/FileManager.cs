@@ -33,7 +33,9 @@ public class FileManager
                 }
                 catch
                 {
-                    throw new Exception("Error while spliting CustomerData ");
+                    Console.WriteLine("Nie udało się zaimportować obiektu o wartości: {0}", line);
+                    break;
+                    //throw new Exception("Error while spliting CustomerData ");
                 }
             }
 
@@ -104,7 +106,6 @@ public class FileManager
         
         try
         {
-            //Console.WriteLine("Test objectToCsv({0}): " + objectToCsv(obj), obj.GetType());
             File.AppendAllText(filePath, objectToCsv(obj));
             Console.WriteLine("Poprawnie zapisano obiekt do bazy");
             return true;

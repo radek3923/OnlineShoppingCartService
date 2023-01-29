@@ -13,7 +13,7 @@ class ShopApp
     private static List<Customer> _customers;
     private static List<Product> _products;
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
-
+    private static Customer loggedCustomer;
 
     public static async Task Main()
     {
@@ -25,9 +25,9 @@ class ShopApp
         _customers = await importCustomersTask;
         _products = await importProductTask;
         
-         fileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
-         fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
-        
+         // fileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
+         // fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
+         
          showAllList(_products);
          showAllList(_customers);
 
@@ -60,22 +60,18 @@ class ShopApp
                     Console.WriteLine("Login: " + login);
                     Console.WriteLine("Haslo: " + password);
 
-                    var customer = findCustomerInDatabase(login, password, _customers);
+                     loggedCustomer = findCustomerInDatabase(login, password, _customers);
 
-                    if (customer is not null)
+                    if (loggedCustomer is not null)
                     {
                         //it means user is Customer
                         clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
-                        
+
                         var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
-                        productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
+                        productsAsString = Regex.Replace(productsAsString, "\n", "#");
 
                         clientCommunication.SendData(Operation.SendingProducts, productsAsString);
                         Console.WriteLine("Przeslano");
-                        
-                        
-                       
-                        
                     }
                     else if (admin.Login.Equals(login) && admin.Password.Equals(password))
                     {
@@ -107,6 +103,20 @@ class ShopApp
                         _customers.Add(newCustomer);
                         fileManager.saveObjectToDatabase(newCustomer);
                     }
+                    break;
+                case Operation.Buy:
+                    // Cart cart = new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), loggedCustomer );
+                    //
+                    // List<CartItem> cartItems = new List<CartItem>();
+                    //
+                    // //To ma być w pętli, tyle razy ile jest wierszy w zamówieniu klienta
+                    // CartItem cartItem = new CartItem(new Guid(), cart, new Product(), new int());
+                    // cartItems.Add(cartItem);
+                    // // to
+                    //
+                    // cart.Products = cartItems;
+                    //
+                    // //TODO zapisz transakcje do CSV
                     break;
             }
         }
