@@ -101,12 +101,11 @@ public class FileManager
                 {
                     string[] items = cartItemAsString.Split("#");
                     
-                    Guid cartId2 = Guid.Parse(items[0]);
-                    Guid cartItemId = Guid.Parse(items[1]);
-                    Guid productId = Guid.Parse(items[2]);
-                    int quantity = int.Parse(items[3]);
+                    Guid cartItemId = Guid.Parse(items[0]);
+                    Guid productId = Guid.Parse(items[1]);
+                    int quantity = int.Parse(items[2]);
             
-                    CartItem cartItem = new CartItem(cartId2, cartItemId, productId, quantity);
+                    CartItem cartItem = new CartItem(cartItemId, productId, quantity);
                     cartItems.Add(cartItem);
                 }
 

@@ -11,9 +11,11 @@ public sealed class Cart : Entity
         Products = products;
     }
     
-    // public override string ToString()
-    // {
-    //     return string.Format("cartId: {0}, cartCreatedAt: {4}, cartUpdatedAt: {5}, customerId: {1}, ", 
-    //         Id, Name, NamePlural, UnitPrice, CreatedAt, UpdatedAt);
-    // }
+    public override string ToString()
+    {
+        string cartItemList = String.Concat( Products.Select(o=>o.ToString() + "\n") );
+        
+        return string.Format("cartId: {0}, cartCreatedAt: {1}, cartUpdatedAt: {2}, customerId: {3}, List<cartItem>:\n{4} ", 
+            Id, CreatedAt, UpdatedAt, CustomerId, cartItemList);
+    }
 }
