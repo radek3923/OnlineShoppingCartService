@@ -1,4 +1,5 @@
 ﻿using ShoppingCartServer.Models;
+using ShoppingCartServer.Utils;
 
 namespace ShoppingCartServer.FileOperations;
 
@@ -6,8 +7,8 @@ public class FileManager
 {
     private const string customersPathFile = @"customers.csv";
     private const string productsPathFile = @"products.csv";
-    
-    
+
+
     public Task<List<Customer>> importCustomers() => Task.Run(() =>
     {
         List<Customer> customers = new List<Customer>();
@@ -15,18 +16,27 @@ public class FileManager
         {
             foreach (var line in File.ReadLines(customersPathFile))
             {
-                string[] split = line.Split(",");
-                string login = split[0];
-                string password = split[1];
-                string addressEmail = split[2];
-                string phoneNumber = split[3];
-                Guid Id = Guid.Parse(split[4]);
-                string firstName = split[5];
-                string lastName = split[6];
+                string[] split = line.Split(";");
 
-                var customer = new Customer(login, password, addressEmail, phoneNumber, Id, firstName, lastName);
-                customers.Add(customer);
+                try
+                {
+                    string login = split[0];
+                    string password = split[1];
+                    string addressEmail = split[2];
+                    string phoneNumber = split[3];
+                    Guid Id = Guid.Parse(split[4]);
+                    string firstName = split[5];
+                    string lastName = split[6];
+
+                    var customer = new Customer(login, password, addressEmail, phoneNumber, Id, firstName, lastName);
+                    customers.Add(customer);
+                }
+                catch
+                {
+                    throw new Exception("Error while spliting CustomerData ");
+                }
             }
+
             return customers;
         }
         catch (IOException)
@@ -34,7 +44,7 @@ public class FileManager
             throw new Exception($"File {customersPathFile} doesnt exist");
         }
     });
-    
+
     public Task<List<Product>> importProducts() => Task.Run(() =>
     {
         List<Product> products = new List<Product>();
@@ -53,6 +63,7 @@ public class FileManager
                 var product = new Product(id, createdAt, updatedAt, name, namePlural, unitPrice);
                 products.Add(product);
             }
+
             return products;
         }
         catch (IOException)
@@ -60,4 +71,48 @@ public class FileManager
             throw new Exception($"File {productsPathFile} doesnt exist");
         }
     });
+
+    public string objectToCsv<T>(T obj)
+    {
+        var properties = from property in typeof(T).GetProperties()
+            where Attribute.IsDefined(property, typeof(OrderAttribute))
+            orderby ((OrderAttribute)property
+                .GetCustomAttributes(typeof(OrderAttribute), false)
+                .Single()).Order
+            select property;
+        
+        var objectInCsv = string.Join(";", properties.Select(p => p.GetValue(obj, null).ToString())) + "\n";
+        return objectInCsv;
+    }
+    
+    public bool saveObjectToDatabase<T>(T obj)
+    {
+        string filePath = "";
+        if (obj is Customer)
+        {
+            filePath = customersPathFile;
+        }
+        else if (obj is Product)
+        {
+            filePath = productsPathFile;
+        }
+        else
+        {
+            Console.WriteLine("Nie rozpoznano ścieżki do zapisu obiektu: {0}", obj.GetType());
+            return false;
+        }
+        
+        try
+        {
+            //Console.WriteLine("Test objectToCsv({0}): " + objectToCsv(obj), obj.GetType());
+            File.AppendAllText(filePath, objectToCsv(obj));
+            Console.WriteLine("Poprawnie zapisano obiekt do bazy");
+            return true;
+        }
+        catch
+        {
+            Console.WriteLine("Wystąpił błąd podczas zapisywania obiektu do bazy");
+        }
+        return false;
+    }
 }

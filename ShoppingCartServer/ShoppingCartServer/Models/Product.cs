@@ -1,9 +1,14 @@
-﻿namespace ShoppingCartServer.Models;
+﻿using ShoppingCartServer.Utils;
+
+namespace ShoppingCartServer.Models;
 
 public sealed class Product : Entity
 {
+    [Order(4)]
     public string Name { get; set; }
+    [Order(5)]
     public string NamePlural { get; set; }
+    [Order(6)]
     public decimal UnitPrice { get; set; }
 
     public Product(Guid id, DateTimeOffset createdAt, DateTimeOffset updatedAt, string name, string namePlural, decimal unitPrice) : base(id, createdAt, updatedAt)

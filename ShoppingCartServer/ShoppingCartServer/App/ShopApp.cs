@@ -21,12 +21,15 @@ class ShopApp
         
         var (importCustomersTask, importProductTask) =
             (fileManager.importCustomers(), fileManager.importProducts());
-
+        
         _customers = await importCustomersTask;
         _products = await importProductTask;
         
-        // showAllList(_products);
-        // showAllList(_customers);
+         fileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
+         fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
+        
+         showAllList(_products);
+         showAllList(_customers);
 
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
         var reader = new StreamReader(pipeServer);
@@ -102,7 +105,7 @@ class ShopApp
                     {
                         Customer newCustomer = new Customer(loginNew, passwordNew, addressEmailNew, phoneNumberNew, new Guid(), firstNameNew, lastNameNew );
                         _customers.Add(newCustomer);
-                        //TODO save new Customer to excel
+                        fileManager.saveObjectToDatabase(newCustomer);
                     }
                     break;
             }

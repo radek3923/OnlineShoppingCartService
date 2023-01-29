@@ -1,10 +1,15 @@
-﻿namespace ShoppingCartServer.Models;
+﻿using ShoppingCartServer.Utils;
+
+namespace ShoppingCartServer.Models;
 
 public class Customer : User
 {
-    private Guid Id { get; set; }
-    private string FirstName { get; set; } 
-    private string LastName { get; set; }
+    [Order(5)]
+    public Guid Id { get; set; }
+    [Order(6)]
+    public string FirstName { get; set; } 
+    [Order(7)]
+    public string LastName { get; set; }
 
     public Customer(string login, string password, string addressEmail, string phoneNumber, Guid id, string firstName, string lastName) : base(login, password, addressEmail, phoneNumber)
     {
@@ -15,7 +20,7 @@ public class Customer : User
 
     public override string ToString()
     {
-        return string.Format("Login: {0}, Password: {1}, addressEmail: {2}, phoneNumber: {3}, cartId: {4}, firstName: {5}, lastName: {6}", 
+        return string.Format("Login: {0}, Password: {1}, addressEmail: {2}, phoneNumber: {3}, Id: {4}, firstName: {5}, lastName: {6}", 
             Login, Password, AddressEmail, PhoneNumber, Id, FirstName, LastName );
     }
 }

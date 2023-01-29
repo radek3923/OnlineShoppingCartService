@@ -71,8 +71,8 @@ public class DataValidator : IEmailValidator, ILoginValidator, IPhoneNumberValid
         if (phoneNumber.Length != 9)
         {
             Console.WriteLine("Numer telefonu ma inną długość niż 9 cyfr");
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 }
