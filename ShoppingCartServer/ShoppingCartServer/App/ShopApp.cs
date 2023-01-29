@@ -44,6 +44,7 @@ class ShopApp
         while (State.Connected.Equals(clientCommunication.State))
         {
             string[] data = clientCommunication.ReadData();
+            Console.WriteLine("dlugosc tab " + data.Length);
             Operation operation = Enum.Parse<Operation>(data[0]);
 
             switch (operation)
@@ -68,8 +69,8 @@ class ShopApp
                         clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
 
                         var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
-                        productsAsString = Regex.Replace(productsAsString, "\n", "#");
-
+                        //productsAsString = Regex.Replace(productsAsString, "\n", "#");
+                        productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
                         clientCommunication.SendData(Operation.SendingProducts, productsAsString);
                         Console.WriteLine("Przeslano");
                     }
@@ -105,7 +106,9 @@ class ShopApp
                     }
                     break;
                 case Operation.Buy:
-                    // Cart cart = new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), loggedCustomer );
+                    // data 
+                    
+                    // Cart cart = new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), idCustomer );
                     //
                     // List<CartItem> cartItems = new List<CartItem>();
                     //

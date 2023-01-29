@@ -20,6 +20,7 @@ public class ServerCommunication
         {
             data += s + "#";
         }
+        data = data.Remove(data.Length-1);
         writer.WriteLine(data);
         writer.Flush();
     }

@@ -16,4 +16,9 @@ public class CartItem
         UnitPrice = unitPrice;
         Quantity = quantity;
     }
+
+    public string mergedString(string separator)
+    {
+        return CartId + separator + Name + separator + Quantity;
+    }
 }

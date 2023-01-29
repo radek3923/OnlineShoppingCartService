@@ -47,7 +47,7 @@ class UserApp
                         string[] data = serverCommunication.ReadData();
 
                         var products = listProducts(data);
-                        CustomerMenu(products);
+                        CustomerMenu(products, serverCommunication);
                     }
                     else
                     {
@@ -128,7 +128,7 @@ class UserApp
         }
     }
 
-    public static void CustomerMenu(List<CartItem> _productsInShop)
+    public static void CustomerMenu(List<CartItem> _productsInShop, ServerCommunication serverCommunication)
     {
         var shoppingCart = new List<CartItem>();
         int option = -1;
@@ -139,7 +139,8 @@ class UserApp
             Console.WriteLine("1 - Dodaj produkt do koszyka");
             Console.WriteLine("2 - Zmien liczbe produktow");
             Console.WriteLine("3 - Wyswietl koszyk");
-            Console.WriteLine("4 - Wyloguj");
+            Console.WriteLine("4 - Przejdz do kasy");
+            Console.WriteLine("5 - Wyloguj");
             option = askForOption2();
             switch (option)
             {
@@ -165,19 +166,16 @@ class UserApp
                     // zawsze podmienia
                     if (shoppingCart.Where(p => (p.Name == chosenProduct)).Count() >= 1)
                     {
-                        Console.WriteLine("Wchodze tu 1");
                         foreach (var p in shoppingCart)
                         {
                             if (p.Name == chosenProduct)
                             {
-                                Console.WriteLine("Wchodze tu 2");
                                 p.Quantity += quantityProduct;
                             }
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Wchodze tu 3");
                         try
                         {
                             var wynik = _productsInShop.Where(p => (p.Name == chosenProduct))
@@ -193,20 +191,58 @@ class UserApp
 
                     break;
                 case 2:
+                    Console.WriteLine("Podaj produkt, ktorego ilosc zmienic");
+                    string chosenProduct1 = Console.ReadLine();
+
+                    if (shoppingCart.Where(p => p.Name == chosenProduct1).Count() == 1)
+                    {
+                        Console.WriteLine("Ile sztuk produktu w koszuku");
+                        int quantityProduct1 = int.TryParse(Console.ReadLine(), out var myInt1) ? myInt1 : 0;
+
+                        if (quantityProduct1 < 0)
+                        {
+                            Console.WriteLine("Podano bledna wartosc");
+                        }
+                        else
+                        {
+                            foreach (var product in shoppingCart)
+                            {
+                                product.Quantity = quantityProduct1;
+                            }    
+                        }
+                        
+                    }
+                    else
+                    {
+                        Console.WriteLine("Nie ma takiego produktu w koszyku");
+                    }
                     break;
                 case 3:
-                    // zmienic wyswietlanie
                     //TODO if shopping cart is empty tell it to customer
                     shoppingCart.RemoveAll(p => p.Quantity == 0);
                     shoppingCart.ForEach(p =>
-                        Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł : {p.Quantity,5} sztuk")));
+                        Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł : {p.Quantity,5} sztuk ## {p.UnitPrice * p.Quantity, 5} zl")));
 
                     break;
                 case 4:
+                    var productsCustomer = shoppingCart.Select(p => p.mergedString("&")).ToArray();
+                    foreach (var VARIABLE in productsCustomer)
+                    {
+                        Console.WriteLine(VARIABLE);
+                        if(VARIABLE == "\r\n") Console.WriteLine("Hello 1");
+                        if(VARIABLE == "\0") Console.WriteLine("Hello 2");
+
+                    }
+
+                    Console.WriteLine("dlugosc tab" + productsCustomer.Length);
+                    serverCommunication.SendData(Operation.Buy, productsCustomer);
+                    shoppingCart.Clear();
+                    break;
+                case 5:
                     Console.WriteLine("Wylogowywanie z konta");
                     break;
             }
-        } while (option != 4);
+        } while (option != 5);
     }
 
     public static void AdminMenu()
@@ -214,7 +250,7 @@ class UserApp
         Console.Clear();
         Console.WriteLine("Wybierz opcje:");
         Console.WriteLine("0 - Dodaj nowy produkt");
-        Console.WriteLine("1 - Modyfikuj produkt");
+        Console.WriteLine("1 - Usun produkt");
         Console.WriteLine("2 - Wyloguj");
     }
 
