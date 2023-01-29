@@ -2,5 +2,5 @@
 
 public interface IEmailValidator
 {
-    bool isEmailValid();
+    bool isEmailValid(string email);
 }

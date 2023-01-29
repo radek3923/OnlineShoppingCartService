@@ -1,6 +1,8 @@
-﻿namespace ShoppingCartServer.Interfaces;
+﻿using ShoppingCartServer.Models;
+
+namespace ShoppingCartServer.Interfaces;
 
 public interface ILoginValidator
 {
-    bool isLoginValid();
+    bool isLoginValid(string login,  List<Customer> customers);
 }

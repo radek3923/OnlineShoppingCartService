@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using ShoppingCartServer.Enums;
 using ShoppingCartServer.FileOperations;
 using ShoppingCartServer.Models;
+using ShoppingCartServer.Utils.Validators;
 using ShoppingCartUser.Communication;
 
 class ShopApp
@@ -85,18 +86,24 @@ class ShopApp
                     }
                     break;
                 case Operation.Register:
+                    
                     Console.WriteLine("Uzytkownik wybral rejestracje");
-                    Console.WriteLine(data[1]);
-                    Console.WriteLine(data[2]);
-                    Console.WriteLine(data[3]);
-                    Console.WriteLine(data[4]);
-                    Console.WriteLine(data[5]);
-                    Console.WriteLine(data[6]);
+                    
+                    string loginNew = data[1];
+                    string passwordNew = data[2];
+                    string addressEmailNew = data[3];
+                    string phoneNumberNew = data[4];
+                    string firstNameNew = data[5];
+                    string lastNameNew = data[6];
 
-                    //TODO validation data, then create new Customer
-                    Customer newCustomer = new Customer(data[1], data[2], data[3], data[4], new Guid(), data[5], data[6]);
-                    _customers.Add(newCustomer);
-                    //TODO save new Customer to excel
+                    DataValidator dataValidator = new DataValidator();
+
+                    if (dataValidator.isDataValid(loginNew, addressEmailNew, phoneNumberNew, _customers))
+                    {
+                        Customer newCustomer = new Customer(loginNew, passwordNew, addressEmailNew, phoneNumberNew, new Guid(), firstNameNew, lastNameNew );
+                        _customers.Add(newCustomer);
+                        //TODO save new Customer to excel
+                    }
                     break;
             }
         }
