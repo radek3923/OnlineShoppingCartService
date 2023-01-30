@@ -156,7 +156,7 @@ class ShopApp
                     for (int i = 1; i < data.Length; i++)
                     {
                         var dataSpilted = data[i].Split("&");
-                        CartItem cartItem = new CartItem(dataGenerator.getNewGuID(), dataGenerator.getNewGuID(), Guid.Parse(dataSpilted[0]),
+                        CartItem cartItem = new CartItem(dataGenerator.getNewGuID(), Guid.Parse(dataSpilted[0]),
                             int.Parse(dataSpilted[2]));
                         cartItems.Add(cartItem);    
                     }
