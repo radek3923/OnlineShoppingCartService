@@ -87,46 +87,28 @@ class ShopApp
                     Console.WriteLine("Login: " + login);
                     Console.WriteLine("Haslo: " + password);
 
-                     loggedCustomer = findCustomerInDatabase(login, password, _customers);
-
-                    if (loggedCustomer is not null)
+                    loggedCustomer = findCustomerInDatabase(login, password, _customers);
+                    bool isUserAdmin = admin.Login.Equals(login) && admin.Password.Equals(password);
+                    
+                    if (loggedCustomer is null && !isUserAdmin)
                     {
-                        //it means user is Customer
-                        clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
-                        loggedCustomer= _customers.Where(p => p.Login == login && p.Password == password).First();
-                        Console.WriteLine(loggedCustomer.ToString());
-                        
-                        // var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
-                        // productsAsString = Regex.Replace(productsAsString, "\n", "#");
-                        // //productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
-                        string s1 = ";";
-                        string s2 = "#";
-                        string productsAsString ="";
-                        foreach (var product in _products)
-                        {
-                            productsAsString += product.Id.ToString() + s1 + product.CreatedAt.ToString() + s1 + product.UpdatedAt.ToString() + s1 +
-                                                product.Name + s1 + product.NamePlural + s1 + product.UnitPrice.ToString() + s2;
-                            // Console.WriteLine(productsAsString);
-                            // productsAsString += fileManager.objectToCsv(product) + s2;
-                        }
-                        productsAsString = productsAsString.Remove(productsAsString.Length-1);
-                        Console.WriteLine(productsAsString);
-                        clientCommunication.SendData(Operation.SendingProducts, productsAsString);
-                        Console.WriteLine("Przeslano");
-                    }
-                    else if (admin.Login.Equals(login) && admin.Password.Equals(password))
-                    {
-                        //it means user is Admin
-                        clientCommunication.SendData(Operation.Login, "TRUE", "TRUE");
-                        var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
-                        productsAsString = Regex.Replace(productsAsString, "\n", "#");
-                        //productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
-                        clientCommunication.SendData(Operation.SendingProducts, productsAsString);
+                        clientCommunication.SendData(Operation.Login, "FALSE", "FALSE");
+                        Console.WriteLine("Nie istnieje uzytkownik o danych login:{0}, password:{1}. Logowanie nieudane", login, password);
                     }
                     else
                     {
-                        // it means user not found in database and user is not admin
-                        clientCommunication.SendData(Operation.Login, "FALSE", "FALSE");
+                        if (isUserAdmin)
+                        {
+                            clientCommunication.SendData(Operation.Login, "TRUE", "TRUE");
+                        }
+                        else
+                        {
+                            clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
+                        }
+                        Console.WriteLine("Uzytkownik {0} zalogował się do serwisu", login);
+                        
+                        clientCommunication.SendData(Operation.SendingProducts, fileManager.ListOfProductsToCsv(_products));
+                        Console.WriteLine("Przeslano listę produktów ze sklepu");
                     }
                     break;
                 case Operation.Register:

@@ -8,6 +8,11 @@ public class FileManager
     private const string customersPathFile = @"customers.csv";
     private const string productsPathFile = @"products.csv";
     private const string shoppingHistoryPathFile = @"shoppingCartsHistory.csv";
+    
+    //separators
+    private const string s1 = ";";
+    private const string s2 = "#";
+    private const string s3 = "$";
 
 
     public Task<List<Customer>> importCustomers() => Task.Run(() =>
@@ -130,7 +135,7 @@ public class FileManager
         }
     });
     
-    public string objectToCsv<T>(T obj)
+    public static string objectToCsv<T>(T obj)
     {
         var properties = from property in typeof(T).GetProperties()
             where Attribute.IsDefined(property, typeof(OrderAttribute))
@@ -139,7 +144,7 @@ public class FileManager
                 .Single()).Order
             select property;
         
-        var objectInCsv = string.Join(";", properties.Select(p => p.GetValue(obj, null).ToString())) + "\n";
+        var objectInCsv = string.Join(";", properties.Select(p => p.GetValue(obj, null).ToString()));
         return objectInCsv;
     }
     
@@ -162,7 +167,7 @@ public class FileManager
         
         try
         {
-            File.AppendAllText(filePath, objectToCsv(obj));
+            File.AppendAllText(filePath, objectToCsv(obj) + "\n");
             Console.WriteLine("Poprawnie zapisano obiekt do bazy");
             return true;
         }
@@ -190,10 +195,6 @@ public class FileManager
 
     public static string cartToCsv(Cart cart)
     {
-        string s1 = ";";
-        string s2 = "#";
-        string s3 = "$";
-        
         string objectInCsv = cart.Id + s1 + cart.CreatedAt + s1 + cart.UpdatedAt + s1 + cart.CustomerId + s1;
 
         foreach (var orderItem in cart.Products)
@@ -205,4 +206,19 @@ public class FileManager
         
         return objectInCsv;
     }
+    
+    public string ListOfProductsToCsv(List<Product> products)
+    {
+        string productsAsString ="";
+        foreach (var product in products)
+        {
+            productsAsString += objectToCsv(product);
+            productsAsString += s2;
+        }
+        productsAsString = productsAsString.Remove(productsAsString.Length-1);
+        
+        return productsAsString;
+    }
+    
+    
 }
