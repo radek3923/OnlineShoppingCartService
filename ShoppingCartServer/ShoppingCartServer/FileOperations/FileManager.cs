@@ -56,15 +56,24 @@ public class FileManager
             foreach (var line in File.ReadLines(productsPathFile))
             {
                 string[] split = line.Split(";");
-                Guid id = Guid.Parse(split[0]);
-                DateTimeOffset createdAt = DateTimeOffset.Parse(split[1]);
-                DateTimeOffset updatedAt = DateTimeOffset.Parse(split[2]);
-                string name = split[3];
-                string namePlural = split[4];
-                decimal unitPrice = decimal.Parse(split[5]);
+                try
+                {
+                    Guid id = Guid.Parse(split[0]);
+                    DateTimeOffset createdAt = DateTimeOffset.Parse(split[1]);
+                    DateTimeOffset updatedAt = DateTimeOffset.Parse(split[2]);
+                    string name = split[3];
+                    string namePlural = split[4];
+                    decimal unitPrice = decimal.Parse(split[5]);
 
-                var product = new Product(id, createdAt, updatedAt, name, namePlural, unitPrice);
-                products.Add(product);
+                    var product = new Product(id, createdAt, updatedAt, name, namePlural, unitPrice);
+                    products.Add(product);
+                }
+                catch
+                {
+                    Console.WriteLine("Nie udało się zaimportować obiektu o wartości: {0}", line);
+                    break;
+                }
+                
             }
 
             return products;

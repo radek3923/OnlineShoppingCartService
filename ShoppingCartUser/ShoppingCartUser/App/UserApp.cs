@@ -45,8 +45,8 @@ class UserApp
 
                         // list of produts sent by server
                         string[] data = serverCommunication.ReadData();
-
                         var products = listProducts(data);
+                        
                         CustomerMenu(products, serverCommunication);
                     }
                     else

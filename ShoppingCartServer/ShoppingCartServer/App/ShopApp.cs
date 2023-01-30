@@ -14,6 +14,7 @@ class ShopApp
     private static List<Customer> _customers;
     private static List<Product> _products;
     private static List<Cart> _historyShoppingCarts;
+    
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     private static Customer loggedCustomer;
 
@@ -21,9 +22,20 @@ class ShopApp
     {
         FileManager fileManager = new FileManager();
         DataGenerator dataGenerator = new DataGenerator();
+        CancellationTokenSource cts = new CancellationTokenSource();
+        
+        Task timeoutTask = Task.Delay(60 * 1000); // 60 seconds
         
         var (importCustomersTask, importProductTask, importShoppingCartsHistoryTask) =
             (fileManager.importCustomers(), fileManager.importProducts(), fileManager.importShoppingCartsHistory());
+        
+        //
+        // if (Task.WaitAny(new[] { importShoppingCartsHistoryTask, timeoutTask }, cts.Token) == 1)
+        // {
+        //     cts.Cancel();
+        //     Console.WriteLine("Reading data from files took too long, cancellation requested.");
+        // }
+        
         
         _customers = await importCustomersTask;
         _products = await importProductTask;
@@ -86,6 +98,19 @@ class ShopApp
                         var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
                         //productsAsString = Regex.Replace(productsAsString, "\n", "#");
                         productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
+                        
+                        // //TODO do it with an attribute [Order()]
+                        // string s1 = ";";
+                        // string s2 = "#";
+                        // string productsAsString ="";
+                        // foreach (var product in _products)
+                        // {
+                        //     productsAsString += product.Id.ToString() + s1 + product.CreatedAt.ToString() + s1 + product.UpdatedAt.ToString() + s1 +
+                        //                         product.Name + s1 + product.NamePlural + s1 + product.UnitPrice.ToString();
+                        //     // productsAsString += fileManager.objectToCsv(product) + s2;
+                        // }
+                        // productsAsString = productsAsString.Remove(data.Length-1);
+                        
                         clientCommunication.SendData(Operation.SendingProducts, productsAsString);
                         Console.WriteLine("Przeslano");
                     }
