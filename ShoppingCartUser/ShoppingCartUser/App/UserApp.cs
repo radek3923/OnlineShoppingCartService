@@ -1,4 +1,6 @@
 ﻿using System.IO.Pipes;
+using System.Text.RegularExpressions;
+using System.Threading.Channels;
 using ShoppingCartUser.App;
 using ShoppingCartUser.Communication;
 using ShoppingCartUser.Enums;
@@ -38,6 +40,9 @@ class UserApp
                     if (UserType.Admin.Equals(userType))
                     {
                         Console.WriteLine("Panel admina");
+                        string[] data = serverCommunication.ReadData();
+                        var products = listProducts(data);
+                        AdminMenu(products, serverCommunication);
                     }
                     else if (UserType.Customer.Equals(userType))
                     {
@@ -146,7 +151,6 @@ class UserApp
             {
                 case 0:
                     _productsInShop.ForEach(p => Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł ")));
-
                     break;
                 case 1:
                     // wyszukaj produkt
@@ -201,7 +205,7 @@ class UserApp
 
                         if (quantityProduct1 < 0)
                         {
-                            Console.WriteLine("Podano bledna wartosc");
+                            Console.WriteLine("Podano błędną wartość");
                         }
                         else
                         {
@@ -218,23 +222,19 @@ class UserApp
                     }
                     break;
                 case 3:
-                    //TODO if shopping cart is empty tell it to customer
-                    shoppingCart.RemoveAll(p => p.Quantity == 0);
-                    shoppingCart.ForEach(p =>
-                        Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł : {p.Quantity,5} sztuk ## {p.UnitPrice * p.Quantity, 5} zl")));
-
+                    if (shoppingCart.Count() == 0)
+                    {
+                        Console.WriteLine("Koszyk jest pusty");
+                    }
+                    else
+                    {
+                        shoppingCart.RemoveAll(p => p.Quantity == 0);
+                        shoppingCart.ForEach(p =>
+                            Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł : {p.Quantity,5} sztuk  ##  {p.UnitPrice * p.Quantity, 5} zl")));
+                    }
                     break;
                 case 4:
                     var productsCustomer = shoppingCart.Select(p => p.mergedString("&")).ToArray();
-                    foreach (var VARIABLE in productsCustomer)
-                    {
-                        Console.WriteLine(VARIABLE);
-                        if(VARIABLE == "\r\n") Console.WriteLine("Hello 1");
-                        if(VARIABLE == "\0") Console.WriteLine("Hello 2");
-
-                    }
-
-                    Console.WriteLine("dlugosc tab" + productsCustomer.Length);
                     serverCommunication.SendData(Operation.Buy, productsCustomer);
                     shoppingCart.Clear();
                     break;
@@ -245,13 +245,110 @@ class UserApp
         } while (option != 5);
     }
 
-    public static void AdminMenu()
+    public static void AdminMenu(List<CartItem> _productsInShop, ServerCommunication serverCommunication)
     {
+        List<string> productsToAdd = new List<string>();
+        List<string> productsToRemove = new List<string>();
         Console.Clear();
-        Console.WriteLine("Wybierz opcje:");
-        Console.WriteLine("0 - Dodaj nowy produkt");
-        Console.WriteLine("1 - Usun produkt");
-        Console.WriteLine("2 - Wyloguj");
+        int option = -1;
+        do
+        {
+            Console.WriteLine("Wybierz opcje:");
+            Console.WriteLine("0 - Wyświetl produkty dostepne w sklepie");
+            Console.WriteLine("1 - Dodaj nowy produkt");
+            Console.WriteLine("2 - Usun produkt");
+            Console.WriteLine("3 - Zaktualizuj zmiany");
+            Console.WriteLine("4 - Wyloguj");
+
+            option = askForOption2();
+            switch (option)
+            {
+                case 0:
+                    // lista bedzie odswiezona po nasepnym uruchomieniu serwera
+                    _productsInShop.ForEach(p => Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł ")));
+                    break;
+                case 1:
+                    Console.WriteLine("Podaj nazwę produktu, który chcesz dodac");
+                    var productName = Console.ReadLine();
+                    if (_productsInShop.Where(p => p.Name == productName).Count() == 1)
+                    {
+                        Console.WriteLine("Taki produkt juz istnieje w sklepie");
+                    }
+                    else if (productsToAdd.Where(p => p.Split('&')[0] == productName).Count() >= 1)
+                    {
+                        // kluczem gownym jest tylko name a nie name+pluralName
+                        Console.WriteLine("Produkt juz zostal dodany do koszyka");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Podaj liczbe mnogą nazwy produktu, który chcesz dodac");
+                        var productNamePlural = Console.ReadLine();
+                        int productPrice = 0;
+                        do
+                        {
+                            Console.WriteLine("Podaj cenę produktu");
+                            productPrice = int.TryParse(Console.ReadLine(), out var myInt) ? myInt : -1;
+                            if(productPrice < 0)
+                                Console.WriteLine("Wprowadzono nie poprawna wartosc");
+                        } while (productPrice < 0);
+
+                        // id generowane przez serwer
+                        string mergedProduct = productName + "&" + productNamePlural + "&" + productPrice;
+                        productsToAdd.Add(mergedProduct);
+                    }
+                    
+                    break;
+                case 2:
+                    Console.WriteLine("Podaj nazwę produktu, która chcesz usunac");
+                    var productNameToRemove = Console.ReadLine();
+                    if (productsToRemove.Where(p => p.Split('&')[1] == productNameToRemove).Count() >= 1)
+                    {
+                        // kluczem gownym jest tylko name a nie name+pluralName
+                        Console.WriteLine("Produkt juz zostal ustawiony do usniecia ");
+                    }
+                    else if (_productsInShop.Where(p => p.Name == productNameToRemove).Count() >= 1)
+                    {
+                        // u nas nazwa jest kluczem glownym
+                        var guidID = _productsInShop.Where(p => p.Name == productNameToRemove)
+                            .Select(p => p.CartId).First();
+                        productsToRemove.Add((guidID).ToString() + "&" + productNameToRemove);
+                        Console.WriteLine("Produkt zostal dodany do listy produktow do usuniecia");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Nie ma takiego produktu w sklepie");
+                    }
+                    
+                    break;
+                case 3:
+                    // najpierw usuwamy produkt
+                    if (productsToRemove.Count != 0)
+                    {
+                        Console.WriteLine("Produktu do usuniecia :");
+                        productsToRemove.ForEach( p => Console.WriteLine(Regex.Replace(p, "&", " : ")));
+                        serverCommunication.SendData(Operation.RemoveProducts, productsToRemove.ToArray());
+                        productsToRemove.Clear();
+                    }
+                    if (productsToAdd.Count != 0)
+                    {
+                        Console.WriteLine("Produkty do dodania");
+                        productsToAdd.ForEach( p => Console.WriteLine(Regex.Replace(p, "&", " : ")));
+                        serverCommunication.SendData(Operation.AddProducts, productsToAdd.ToArray());
+                        productsToAdd.Clear();
+                    }
+                    if (productsToAdd.Count == 0 && productsToRemove.Count == 0)
+                    {
+                        Console.WriteLine("Brak produktow do dodania lub do usuniecia");
+                    }
+                    break;
+                
+                case 4:
+                    Console.WriteLine("Wylogowywanie z konta");
+                    break;
+            }
+
+        } while (option != 4);
+        
     }
 
     public static Operation askForOption()

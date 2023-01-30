@@ -71,7 +71,6 @@ class ShopApp
         while (State.Connected.Equals(clientCommunication.State))
         {
             string[] data = clientCommunication.ReadData();
-            Console.WriteLine("dlugosc tab " + data.Length);
             Operation operation = Enum.Parse<Operation>(data[0]);
 
             switch (operation)
@@ -94,23 +93,24 @@ class ShopApp
                     {
                         //it means user is Customer
                         clientCommunication.SendData(Operation.Login, "TRUE", "FALSE");
-
-                        var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
-                        //productsAsString = Regex.Replace(productsAsString, "\n", "#");
-                        productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
+                        loggedCustomer= _customers.Where(p => p.Login == login && p.Password == password).First();
+                        Console.WriteLine(loggedCustomer.ToString());
                         
-                        // //TODO do it with an attribute [Order()]
-                        // string s1 = ";";
-                        // string s2 = "#";
-                        // string productsAsString ="";
-                        // foreach (var product in _products)
-                        // {
-                        //     productsAsString += product.Id.ToString() + s1 + product.CreatedAt.ToString() + s1 + product.UpdatedAt.ToString() + s1 +
-                        //                         product.Name + s1 + product.NamePlural + s1 + product.UnitPrice.ToString();
-                        //     // productsAsString += fileManager.objectToCsv(product) + s2;
-                        // }
-                        // productsAsString = productsAsString.Remove(data.Length-1);
-                        
+                        // var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
+                        // productsAsString = Regex.Replace(productsAsString, "\n", "#");
+                        // //productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
+                        string s1 = ";";
+                        string s2 = "#";
+                        string productsAsString ="";
+                        foreach (var product in _products)
+                        {
+                            productsAsString += product.Id.ToString() + s1 + product.CreatedAt.ToString() + s1 + product.UpdatedAt.ToString() + s1 +
+                                                product.Name + s1 + product.NamePlural + s1 + product.UnitPrice.ToString() + s2;
+                            // Console.WriteLine(productsAsString);
+                            // productsAsString += fileManager.objectToCsv(product) + s2;
+                        }
+                        productsAsString = productsAsString.Remove(productsAsString.Length-1);
+                        Console.WriteLine(productsAsString);
                         clientCommunication.SendData(Operation.SendingProducts, productsAsString);
                         Console.WriteLine("Przeslano");
                     }
@@ -118,6 +118,10 @@ class ShopApp
                     {
                         //it means user is Admin
                         clientCommunication.SendData(Operation.Login, "TRUE", "TRUE");
+                        var productsAsString = await Task.Run((() => File.ReadAllText("products.csv")));
+                        productsAsString = Regex.Replace(productsAsString, "\n", "#");
+                        //productsAsString = Regex.Replace(productsAsString, "\r\n", "#");
+                        clientCommunication.SendData(Operation.SendingProducts, productsAsString);
                     }
                     else
                     {
@@ -147,19 +151,33 @@ class ShopApp
                     break;
                 case Operation.Buy:
                     // data 
-                    
-                    // Cart cart = new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), idCustomer );
-                    //
-                    // List<CartItem> cartItems = new List<CartItem>();
-                    //
-                    // //To ma być w pętli, tyle razy ile jest wierszy w zamówieniu klienta
-                    // CartItem cartItem = new CartItem(new Guid(), cart, new Product(), new int());
-                    // cartItems.Add(cartItem);
-                    // // to
-                    //
-                    // cart.Products = cartItems;
-                    //
-                    // //TODO zapisz transakcje do CSV
+                    List<CartItem> cartItems = new List<CartItem>();
+                    Cart cart = new Cart(dataGenerator.getNewGuID(), new DateTimeOffset(), new DateTimeOffset(),loggedCustomer.Id, cartItems );
+                    for (int i = 1; i < data.Length; i++)
+                    {
+                        var dataSpilted = data[i].Split("&");
+                        CartItem cartItem = new CartItem(dataGenerator.getNewGuID(), dataGenerator.getNewGuID(), Guid.Parse(dataSpilted[0]),
+                            int.Parse(dataSpilted[2]));
+                        cartItems.Add(cartItem);    
+                    }
+                    cart.Products = cartItems;
+                    // zapisywanie koszyka do bazy danych
+                    break;
+                case Operation.AddProducts:
+                    for (int i = 1; i < data.Length; i++)
+                    {
+                        var dataSpilted = data[i].Split("&");
+                        fileManager.saveObjectToDatabase(new Product(dataGenerator.getNewGuID(), dataGenerator.GetActualDateTimeOffset(),
+                            dataGenerator.GetActualDateTimeOffset(), dataSpilted[0], dataSpilted[1], int.Parse(dataSpilted[2])));
+                    }
+
+                    break;
+                case Operation.RemoveProducts:
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        Console.WriteLine(data[i]);
+                        //var dataSpilted = data[i].Split("&");
+                    }
                     break;
             }
         }

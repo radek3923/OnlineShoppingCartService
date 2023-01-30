@@ -7,5 +7,7 @@ public enum Operation
     Disconnect,
     Buy,
     None,
-    SendingProducts
+    SendingProducts,
+    AddProducts,
+    RemoveProducts
 }
