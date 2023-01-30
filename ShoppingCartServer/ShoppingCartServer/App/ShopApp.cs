@@ -1,4 +1,5 @@
-﻿using System.IO.Pipes;
+﻿using System.Diagnostics;
+using System.IO.Pipes;
 using System.Text.RegularExpressions;
 using ShoppingCartServer.Enums;
 using ShoppingCartServer.FileOperations;
@@ -17,30 +18,31 @@ class ShopApp
     
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     private static Customer loggedCustomer;
+    private static int maxDataLoadTime = 5;
 
     public static async Task Main()
     {
-        FileManager fileManager = new FileManager();
-        DataGenerator dataGenerator = new DataGenerator();
+        
         CancellationTokenSource cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromSeconds(maxDataLoadTime));
         
-        Task timeoutTask = Task.Delay(60 * 1000); // 60 seconds
-        
+        FileManager fileManager = new FileManager(cts);
+        DataGenerator dataGenerator = new DataGenerator();
+
         var (importCustomersTask, importProductTask, importShoppingCartsHistoryTask) =
             (fileManager.importCustomers(), fileManager.importProducts(), fileManager.importShoppingCartsHistory());
         
-        //
-        // if (Task.WaitAny(new[] { importShoppingCartsHistoryTask, timeoutTask }, cts.Token) == 1)
-        // {
-        //     cts.Cancel();
-        //     Console.WriteLine("Reading data from files took too long, cancellation requested.");
-        // }
-        
-        
-        _customers = await importCustomersTask;
-        _products = await importProductTask;
-        _historyShoppingCarts = await importShoppingCartsHistoryTask;
-        
+        try
+        {
+            _customers = await importCustomersTask;
+            _products = await importProductTask;
+            _historyShoppingCarts = await importShoppingCartsHistoryTask;
+        }
+        catch(OperationCanceledException)
+        {
+            throw new Exception(String.Format("Wczytywanie danych z pliku przekroczyło limit {0}s. Trwa zamknięcie programu.", maxDataLoadTime));
+        }
+
         // List<CartItem> cartItems = new List<CartItem>();
         // CartItem cartItem1 = new CartItem(new Guid(), new Guid(), 0);
         // CartItem cartItem2 = new CartItem(new Guid(), new Guid(), 0);
@@ -133,17 +135,17 @@ class ShopApp
                     break;
                 case Operation.Buy:
                     // data 
-                    List<CartItem> cartItems = new List<CartItem>();
-                    Cart cart = new Cart(dataGenerator.getNewGuID(), new DateTimeOffset(), new DateTimeOffset(),loggedCustomer.Id, cartItems );
+                    List<CartItem> cartItemsBoughtByCustomer = new List<CartItem>();
+                    Cart cart = new Cart(dataGenerator.getNewGuID(), dataGenerator.GetActualDateTimeOffset(), dataGenerator.GetActualDateTimeOffset(), loggedCustomer.Id, cartItemsBoughtByCustomer );
                     for (int i = 1; i < data.Length; i++)
                     {
                         var dataSpilted = data[i].Split("&");
                         CartItem cartItem = new CartItem(dataGenerator.getNewGuID(), Guid.Parse(dataSpilted[0]),
                             int.Parse(dataSpilted[2]));
-                        cartItems.Add(cartItem);    
+                        cartItemsBoughtByCustomer.Add(cartItem);    
                     }
-                    cart.Products = cartItems;
-                    // zapisywanie koszyka do bazy danych
+                    cart.Products = cartItemsBoughtByCustomer;
+                    fileManager.saveCartToDatabase(cart);
                     break;
                 case Operation.AddProducts:
                     for (int i = 1; i < data.Length; i++)

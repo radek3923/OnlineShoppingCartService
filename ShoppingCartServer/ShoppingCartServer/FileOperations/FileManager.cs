@@ -8,7 +8,13 @@ public class FileManager
     private const string customersPathFile = @"customers.csv";
     private const string productsPathFile = @"products.csv";
     private const string shoppingHistoryPathFile = @"shoppingCartsHistory.csv";
-    
+    private CancellationTokenSource cts;
+
+    public FileManager(CancellationTokenSource cts)
+    {
+        this.cts = cts;
+    }
+
     //separators
     private const string s1 = ";";
     private const string s2 = "#";
@@ -22,8 +28,8 @@ public class FileManager
         {
             foreach (var line in File.ReadLines(customersPathFile))
             {
+                cts.Token.ThrowIfCancellationRequested();
                 string[] split = line.Split(";");
-
                 try
                 {
                     string login = split[0];
@@ -60,6 +66,7 @@ public class FileManager
         {
             foreach (var line in File.ReadLines(productsPathFile))
             {
+                cts.Token.ThrowIfCancellationRequested();
                 string[] split = line.Split(";");
                 try
                 {
@@ -96,6 +103,7 @@ public class FileManager
         {
             foreach (var line in File.ReadLines(shoppingHistoryPathFile))
             {
+                cts.Token.ThrowIfCancellationRequested();
                 List<CartItem> cartItems = new List<CartItem>();
                 
                 string[] split = line.Split(";");
