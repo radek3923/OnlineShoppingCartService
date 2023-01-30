@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.IO.Pipes;
-using System.Text.RegularExpressions;
+﻿using System.IO.Pipes;
 using ShoppingCartServer.Enums;
 using ShoppingCartServer.FileOperations;
 using ShoppingCartServer.Models;
@@ -18,7 +16,7 @@ class ShopApp
     
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     private static Customer loggedCustomer;
-    private static int maxDataLoadTime = 5;
+    private static int maxDataLoadTime = 30;
 
     public static async Task Main()
     {

@@ -3,7 +3,7 @@ using ShoppingCartServer.Utils;
 
 namespace ShoppingCartServer.FileOperations;
 
-public class FileManager
+public class FileManager : IDisposable
 {
     private const string customersPathFile = @"customers.csv";
     private const string productsPathFile = @"products.csv";
@@ -228,5 +228,9 @@ public class FileManager
         return productsAsString;
     }
     
-    
+    public void Dispose()
+    {
+        cts.Dispose();
+        Console.WriteLine("to poprawienia");
+    }
 }
