@@ -9,6 +9,5 @@ public enum Operation
     Disconnect,
     Buy,
     SendingProducts,
-    AddProducts,
-    RemoveProducts
+    ModifyProducts
 }

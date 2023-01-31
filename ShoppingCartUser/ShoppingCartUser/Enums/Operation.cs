@@ -8,6 +8,5 @@ public enum Operation
     Buy,
     None,
     SendingProducts,
-    AddProducts,
-    RemoveProducts
+    ModifyProducts
 }

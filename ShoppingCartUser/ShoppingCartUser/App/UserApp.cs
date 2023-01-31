@@ -31,6 +31,7 @@ class UserApp
             Console.WriteLine("2 - Zakoncz");
 
             operation = askForOption();
+            Console.Clear();
 
             switch (operation)
             {
@@ -40,9 +41,16 @@ class UserApp
                     if (UserType.Admin.Equals(userType))
                     {
                         Console.WriteLine("Panel admina");
+                        
+                        //string[] history = serverCommunication.ReadData();
+                        //var history = listProducts(data2);
+                        // Console.WriteLine("historia" + history[1]);
                         string[] data = serverCommunication.ReadData();
                         var products = listProducts(data);
-                        AdminMenu(products, serverCommunication);
+                        
+
+                        
+                        AdminMenu(products ,  serverCommunication);
                     }
                     else if (UserType.Customer.Equals(userType))
                     {
@@ -131,6 +139,11 @@ class UserApp
         {
             throw new Exception("Error while entering data");
         }
+
+        string[] registerResponse = serverCommunication.ReadData();
+        if (bool.Parse(registerResponse[1])) Console.WriteLine("Rejestracja udana");
+        else Console.WriteLine("Rejestracja nieudana, dane nie przeszły walidacji");
+        
     }
 
     public static void CustomerMenu(List<CartItem> _productsInShop, ServerCommunication serverCommunication)
@@ -147,6 +160,8 @@ class UserApp
             Console.WriteLine("4 - Przejdz do kasy");
             Console.WriteLine("5 - Wyloguj");
             option = askForOption2();
+            Console.Clear();
+            
             switch (option)
             {
                 case 0:
@@ -154,13 +169,12 @@ class UserApp
                     break;
                 case 1:
                     // wyszukaj produkt
-                    Console.WriteLine("Podaj produkt, ktory dodac do koszyka");
+                    Console.WriteLine("Podaj nazwę produktu, ktory dodac do koszyka");
                     string chosenProduct = Console.ReadLine();
                     Console.WriteLine("Ile sztuk produktu dodac do koszyka");
                     
                     int quantityProduct = int.TryParse(Console.ReadLine(), out var myInt) ? myInt : 0;
-                    Console.WriteLine(quantityProduct);
-                    
+
                     if (quantityProduct <= 0)
                     {
                         Console.WriteLine("Błędna wartość");
@@ -184,7 +198,7 @@ class UserApp
                         {
                             var wynik = _productsInShop.Where(p => (p.Name == chosenProduct))
                                 .Select(p => (p.CartId, p.Name, p.NamePlural, p.UnitPrice)).First();
-                            shoppingCart.Add(new CartItem(wynik.Item1, wynik.Item2, wynik.Item3, wynik.Item4,
+                            shoppingCart.Add(new CartItem(wynik.Item1,DateTimeOffset.Now, DateTimeOffset.Now,  wynik.Item2, wynik.Item3, wynik.Item4,
                                 quantityProduct));
                         }
                         catch
@@ -195,12 +209,13 @@ class UserApp
 
                     break;
                 case 2:
-                    Console.WriteLine("Podaj produkt, ktorego ilosc zmienic");
-                    string chosenProduct1 = Console.ReadLine();
+                    Console.WriteLine("Podaj nazwę produktu, ktorego ilosc chcesz zmienic");
+                    string chosenProductName = Console.ReadLine();
 
-                    if (shoppingCart.Where(p => p.Name == chosenProduct1).Count() == 1)
+                    var selectedProducts = shoppingCart.Where(p => p.Name == chosenProductName);
+                    if (selectedProducts.Count() != 0)
                     {
-                        Console.WriteLine("Ile sztuk produktu w koszuku");
+                        Console.WriteLine("Jaką liczbę produków umieścić w koszyku");
                         int quantityProduct1 = int.TryParse(Console.ReadLine(), out var myInt1) ? myInt1 : 0;
 
                         if (quantityProduct1 < 0)
@@ -209,7 +224,7 @@ class UserApp
                         }
                         else
                         {
-                            foreach (var product in shoppingCart)
+                            foreach (var product in selectedProducts)
                             {
                                 product.Quantity = quantityProduct1;
                             }    
@@ -234,9 +249,14 @@ class UserApp
                     }
                     break;
                 case 4:
-                    var productsCustomer = shoppingCart.Select(p => p.mergedString("&")).ToArray();
-                    serverCommunication.SendData(Operation.Buy, productsCustomer);
-                    shoppingCart.Clear();
+                    if (shoppingCart.Count() != 0)
+                    {
+                        var productsCustomer = shoppingCart.Select(p => p.mergedString("&")).ToArray();
+                        serverCommunication.SendData(Operation.Buy, productsCustomer);
+                        shoppingCart.Clear();
+                        Console.WriteLine("Zakupy udane");
+                    }
+                    else Console.WriteLine("Koszyk jest pusty");
                     break;
                 case 5:
                     Console.WriteLine("Wylogowywanie z konta");
@@ -245,7 +265,7 @@ class UserApp
         } while (option != 5);
     }
 
-    public static void AdminMenu(List<CartItem> _productsInShop, ServerCommunication serverCommunication)
+    public static void AdminMenu(List<CartItem> _productsInShop,  ServerCommunication serverCommunication)
     {
         List<string> productsToAdd = new List<string>();
         List<string> productsToRemove = new List<string>();
@@ -257,27 +277,24 @@ class UserApp
             Console.WriteLine("0 - Wyświetl produkty dostepne w sklepie");
             Console.WriteLine("1 - Dodaj nowy produkt");
             Console.WriteLine("2 - Usun produkt");
-            Console.WriteLine("3 - Zaktualizuj zmiany");
+            Console.WriteLine("3 - Zatwierdz zmiany");
             Console.WriteLine("4 - Wyloguj");
-
             option = askForOption2();
+            Console.Clear();
+            
             switch (option)
             {
                 case 0:
                     // lista bedzie odswiezona po nasepnym uruchomieniu serwera
                     _productsInShop.ForEach(p => Console.WriteLine(($" {p.Name,-10}:{p.UnitPrice,5} zł ")));
+                    
                     break;
                 case 1:
                     Console.WriteLine("Podaj nazwę produktu, który chcesz dodac");
                     var productName = Console.ReadLine();
-                    if (_productsInShop.Where(p => p.Name == productName).Count() == 1)
+                    if (_productsInShop.Where(p => p.Name == productName).Count() >= 1)
                     {
                         Console.WriteLine("Taki produkt juz istnieje w sklepie");
-                    }
-                    else if (productsToAdd.Where(p => p.Split('&')[0] == productName).Count() >= 1)
-                    {
-                        // kluczem gownym jest tylko name a nie name+pluralName
-                        Console.WriteLine("Produkt juz zostal dodany do koszyka");
                     }
                     else
                     {
@@ -294,6 +311,8 @@ class UserApp
 
                         // id generowane przez serwer
                         string mergedProduct = productName + "&" + productNamePlural + "&" + productPrice;
+                        _productsInShop.Add(new CartItem(Guid.NewGuid(), DateTimeOffset.Now,  DateTimeOffset.Now, productName, productNamePlural, productPrice,
+                            Int32.MaxValue));
                         productsToAdd.Add(mergedProduct);
                     }
                     
@@ -301,45 +320,23 @@ class UserApp
                 case 2:
                     Console.WriteLine("Podaj nazwę produktu, która chcesz usunac");
                     var productNameToRemove = Console.ReadLine();
-                    if (productsToRemove.Where(p => p.Split('&')[1] == productNameToRemove).Count() >= 1)
+                    if (_productsInShop.Where(p => p.Name == productNameToRemove).Count() >= 1)
                     {
-                        // kluczem gownym jest tylko name a nie name+pluralName
-                        Console.WriteLine("Produkt juz zostal ustawiony do usniecia ");
-                    }
-                    else if (_productsInShop.Where(p => p.Name == productNameToRemove).Count() >= 1)
-                    {
-                        // u nas nazwa jest kluczem glownym
                         var guidID = _productsInShop.Where(p => p.Name == productNameToRemove)
                             .Select(p => p.CartId).First();
-                        productsToRemove.Add((guidID).ToString() + "&" + productNameToRemove);
-                        Console.WriteLine("Produkt zostal dodany do listy produktow do usuniecia");
+
+                        _productsInShop.RemoveAll(p => p.Name == productNameToRemove);
+       
                     }
                     else
                     {
                         Console.WriteLine("Nie ma takiego produktu w sklepie");
                     }
-                    
                     break;
                 case 3:
-                    // najpierw usuwamy produkt
-                    if (productsToRemove.Count != 0)
-                    {
-                        Console.WriteLine("Produktu do usuniecia :");
-                        productsToRemove.ForEach( p => Console.WriteLine(Regex.Replace(p, "&", " : ")));
-                        serverCommunication.SendData(Operation.RemoveProducts, productsToRemove.ToArray());
-                        productsToRemove.Clear();
-                    }
-                    if (productsToAdd.Count != 0)
-                    {
-                        Console.WriteLine("Produkty do dodania");
-                        productsToAdd.ForEach( p => Console.WriteLine(Regex.Replace(p, "&", " : ")));
-                        serverCommunication.SendData(Operation.AddProducts, productsToAdd.ToArray());
-                        productsToAdd.Clear();
-                    }
-                    if (productsToAdd.Count == 0 && productsToRemove.Count == 0)
-                    {
-                        Console.WriteLine("Brak produktow do dodania lub do usuniecia");
-                    }
+                    Console.WriteLine("Zatwierdz zmiany");
+                    var products = _productsInShop.Select(p => p.CartId + ";" + p.CreatedAt + ";" + p.UpdatedAt + ";" + p.Name + ";" + p.NamePlural + ";" + p.UnitPrice ).ToArray();
+                    serverCommunication.SendData(Operation.ModifyProducts, products);
                     break;
                 
                 case 4:
@@ -400,7 +397,7 @@ class UserApp
                 string NamePlural = split[4];
                 decimal UnitPrice = Decimal.Parse(split[5]);
 
-                ProductList.Add(new CartItem(Id, Name, NamePlural, UnitPrice, Int32.MaxValue));
+                ProductList.Add(new CartItem(Id, DateTimeOffset.Now, DateTimeOffset.Now,  Name, NamePlural, UnitPrice, Int32.MaxValue));
             }
             catch
             {

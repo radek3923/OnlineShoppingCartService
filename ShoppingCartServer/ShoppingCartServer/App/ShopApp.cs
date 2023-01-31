@@ -56,9 +56,9 @@ class ShopApp
         // cartItems.Add(cartItem1);
         // cartItems.Add(cartItem2);
         
-        // fileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
-        // fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
-        //fileManager.saveCartToDatabase(new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), new Guid(), cartItems ));
+        // OutputFileManager.saveObjectToDatabase(new Customer("test1", "test2", "test3", "test4", new Guid(), "test6", "test7"));
+        // OutputFileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
+        //OutputFileManager.saveCartToDatabase(new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), new Guid(), cartItems ));
          
         // showAllList(_products);
         // Console.WriteLine();
@@ -141,6 +141,13 @@ class ShopApp
                         Customer newCustomer = new Customer(loginNew, passwordNew, addressEmailNew, phoneNumberNew, dataGenerator.getNewGuID(), firstNameNew, lastNameNew );
                         _customers.Add(newCustomer);
                         outputFileManager.saveObjectToDatabase(newCustomer);
+                        Console.WriteLine("Rejestracja uzytkownika udana.");
+                        clientCommunication.SendData(Operation.Register, "TRUE");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Rejestracja uzytkownika nieudana.");
+                        clientCommunication.SendData(Operation.Register, "FALSE");
                     }
                     break;
                 case Operation.Buy:
@@ -152,26 +159,26 @@ class ShopApp
                         var dataSpilted = data[i].Split("&");
                         CartItem cartItem = new CartItem(dataGenerator.getNewGuID(), Guid.Parse(dataSpilted[0]),
                             int.Parse(dataSpilted[2]));
-                        cartItemsBoughtByCustomer.Add(cartItem);    
+                        cartItemsBoughtByCustomer.Add(cartItem);
                     }
                     cart.Products = cartItemsBoughtByCustomer;
                     outputFileManager.saveCartToDatabase(cart);
                     break;
-                case Operation.AddProducts:
+                case Operation.ModifyProducts:
+                    _products.Clear();
                     for (int i = 1; i < data.Length; i++)
                     {
-                        var dataSpilted = data[i].Split("&");
-                        outputFileManager.saveObjectToDatabase(new Product(dataGenerator.getNewGuID(), dataGenerator.GetActualDateTimeOffset(),
-                            dataGenerator.GetActualDateTimeOffset(), dataSpilted[0], dataSpilted[1], int.Parse(dataSpilted[2])));
+                        var dataSpilted = data[i].Split(";");
+
+                        _products.Add(new Product(Guid.Parse(dataSpilted[0]), DateTimeOffset.Parse(dataSpilted[1]), DateTimeOffset.Parse(dataSpilted[2]), dataSpilted[3], dataSpilted[4],
+                            int.Parse(dataSpilted[5])));
+
+
                     }
-        
-                    break;
-                case Operation.RemoveProducts:
-                    for (int i = 0; i < data.Length; i++)
-                    {
-                        Console.WriteLine(data[i]);
-                        //var dataSpilted = data[i].Split("&");
-                    }
+                    outputFileManager.clearDatabase(productsPathFile);
+                    Console.WriteLine(_products.Count);
+                    _products.ForEach(p => outputFileManager.saveObjectToDatabase(p));
+                    Console.WriteLine("Zmodyfikowano liste produktow w bazie danych");
                     break;
             }
         }

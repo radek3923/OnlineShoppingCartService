@@ -7,10 +7,14 @@ public class CartItem
     public string NamePlural { get; set; }
     public decimal UnitPrice { get; set; }
     public int Quantity { get; set; }
-    
-    public CartItem(Guid cartId, string name, string namePlural, decimal unitPrice, int quantity)
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public CartItem(Guid cartId, DateTimeOffset createdAt, DateTimeOffset updatedAt, string name, string namePlural, decimal unitPrice, int quantity)
     {
         CartId = cartId;
+        CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
         Name = name;
         NamePlural = namePlural;
         UnitPrice = unitPrice;

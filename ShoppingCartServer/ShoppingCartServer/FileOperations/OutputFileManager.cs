@@ -93,4 +93,9 @@ public sealed class OutputFileManager : FileManager
         
         return productsAsString;
     }
+
+    public void clearDatabase(string pathfile)
+    {
+        File.WriteAllText(pathfile,string.Empty);
+    }
 }
