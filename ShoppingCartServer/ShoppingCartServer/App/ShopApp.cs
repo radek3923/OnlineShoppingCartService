@@ -16,7 +16,7 @@ class ShopApp
     
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     private static Customer loggedCustomer;
-    private static int maxDataLoadTime = 30;
+    private static int maxDataLoadTime = 60;
     
     private const string customersPathFile = @"customers.csv";
     private const string productsPathFile = @"products.csv";
