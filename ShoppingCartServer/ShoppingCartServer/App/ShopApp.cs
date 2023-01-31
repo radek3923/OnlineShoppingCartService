@@ -163,6 +163,7 @@ class ShopApp
                     }
                     cart.Products = cartItemsBoughtByCustomer;
                     outputFileManager.saveCartToDatabase(cart);
+                    Console.WriteLine("Poprawnie zapisano informację o sprzedaży do bazy");
                     break;
                 case Operation.ModifyProducts:
                     _products.Clear();

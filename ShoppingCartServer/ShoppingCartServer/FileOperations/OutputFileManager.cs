@@ -42,7 +42,6 @@ public sealed class OutputFileManager : FileManager
         try
         {
             File.AppendAllText(filePath, objectToCsv(obj) + "\n");
-            Console.WriteLine("Poprawnie zapisano obiekt do bazy");
             return true;
         }
         catch
