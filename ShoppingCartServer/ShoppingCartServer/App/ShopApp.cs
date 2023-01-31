@@ -61,8 +61,11 @@ class ShopApp
         //fileManager.saveCartToDatabase(new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), new Guid(), cartItems ));
          
         // showAllList(_products);
+        // Console.WriteLine();
         // showAllList(_customers);
-        //showAllList(_historyShoppingCarts);
+        // Console.WriteLine();
+        // showAllList(_historyShoppingCarts);
+        // Console.WriteLine();
          
         // Console.WriteLine(dataGenerator.getNewGuID());
         // Console.WriteLine(dataGenerator.GetActualDateTimeOffset());
@@ -175,7 +178,6 @@ class ShopApp
         pipeServer.Close();
     }
     
-
     public static Customer findCustomerInDatabase(String login, String password, List<Customer> _customers)
     {
         var customer = _customers.Where((customer) => (customer.Login == login && customer.Password == password))

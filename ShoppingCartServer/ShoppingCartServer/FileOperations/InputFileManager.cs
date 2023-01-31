@@ -34,6 +34,8 @@ public class InputFileManager : FileManager, IDisposable
 
     public Task<List<Customer>> importCustomers() => Task.Run(() =>
     {
+        checkIfTheFolderExists(customersPathFile);
+        
         List<Customer> customers = new List<Customer>();
         try
         {
@@ -71,6 +73,8 @@ public class InputFileManager : FileManager, IDisposable
 
     public Task<List<Product>> importProducts() => Task.Run(() =>
     {
+        checkIfTheFolderExists(productsPathFile);
+        
         List<Product> products = new List<Product>();
         try
         {
@@ -108,6 +112,8 @@ public class InputFileManager : FileManager, IDisposable
     
     public Task<List<Cart>> importShoppingCartsHistory() => Task.Run(() =>
     {
+        checkIfTheFolderExists(shoppingHistoryPathFile);
+        
         List<Cart> carts = new List<Cart>();
         try
         {
@@ -152,4 +158,13 @@ public class InputFileManager : FileManager, IDisposable
             throw new Exception($"File {shoppingHistoryPathFile} doesnt exist");
         }
     });
+
+    public void checkIfTheFolderExists(string pathFile)
+    {
+        if (!File.Exists(pathFile))
+        {
+            File.Create(pathFile).Close();
+            Console.WriteLine("Utworzenie pliku o scieżce: {0}", pathFile);
+        }
+    }
 }
