@@ -16,39 +16,40 @@ class ShopApp
     
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     private static Customer loggedCustomer;
+    private static int maxDataLoadTime = 30;
+    
+    private const string customersPathFile = @"customers.csv";
+    private const string productsPathFile = @"products.csv";
+    private const string shoppingHistoryPathFile = @"shoppingCartsHistory.csv";
 
     public static async Task Main()
     {
+        DataGenerator dataGenerator = new DataGenerator();
         
         CancellationTokenSource cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromSeconds(maxDataLoadTime));
-
-        DataGenerator dataGenerator = new DataGenerator();
-
-        FileManager fileManager = new FileManager(cts);
-        // using (FileManager fileManager = new FileManager(cts))
-        // {
-        var (importCustomersTask, importProductTask, importShoppingCartsHistoryTask) =
-            (fileManager.importCustomers(), fileManager.importProducts(), fileManager.importShoppingCartsHistory());
-
-
-        try
-        {
-            _customers = await importCustomersTask;
-            _products = await importProductTask;
-            _historyShoppingCarts = await importShoppingCartsHistoryTask;
-        }
-        catch(OperationCanceledException)
-        {
-            throw new Exception(String.Format("Wczytywanie danych z pliku przekroczyło limit {0}s. Trwa zamknięcie programu.", maxDataLoadTime));
-        }
-
-        //probably not required
-        fileManager.Dispose();
-        // }
-
         
+        InputFileManager inputFileManager = new InputFileManager(customersPathFile, productsPathFile, shoppingHistoryPathFile, cts);
+        OutputFileManager outputFileManager = new OutputFileManager(customersPathFile, productsPathFile, shoppingHistoryPathFile);
 
+        using (inputFileManager)
+        {
+            var (importCustomersTask, importProductTask, importShoppingCartsHistoryTask) =
+                (inputFileManager.importCustomers(), inputFileManager.importProducts(), inputFileManager.importShoppingCartsHistory());
+            try
+            {
+                _customers = await importCustomersTask;
+                _products = await importProductTask;
+                _historyShoppingCarts = await importShoppingCartsHistoryTask;
+            }
+            catch(OperationCanceledException)
+            {
+                throw new Exception(String.Format("Wczytywanie danych z pliku przekroczyło limit {0}s. Trwa zamknięcie programu.", maxDataLoadTime));
+            }
+            //probably not required, because this method is executed anyway
+            //inputFileManager.Dispose();
+        }
+        
         // List<CartItem> cartItems = new List<CartItem>();
         // CartItem cartItem1 = new CartItem(new Guid(), new Guid(), 0);
         // CartItem cartItem2 = new CartItem(new Guid(), new Guid(), 0);
@@ -115,7 +116,7 @@ class ShopApp
                         }
                         Console.WriteLine("Uzytkownik {0} zalogował się do serwisu", login);
                         
-                        clientCommunication.SendData(Operation.SendingProducts, fileManager.ListOfProductsToCsv(_products));
+                        clientCommunication.SendData(Operation.SendingProducts, outputFileManager.ListOfProductsToCsv(_products));
                         Console.WriteLine("Przeslano listę produktów ze sklepu");
                     }
                     break;
@@ -136,7 +137,7 @@ class ShopApp
                     {
                         Customer newCustomer = new Customer(loginNew, passwordNew, addressEmailNew, phoneNumberNew, dataGenerator.getNewGuID(), firstNameNew, lastNameNew );
                         _customers.Add(newCustomer);
-                        fileManager.saveObjectToDatabase(newCustomer);
+                        outputFileManager.saveObjectToDatabase(newCustomer);
                     }
                     break;
                 case Operation.Buy:
@@ -151,13 +152,13 @@ class ShopApp
                         cartItemsBoughtByCustomer.Add(cartItem);    
                     }
                     cart.Products = cartItemsBoughtByCustomer;
-                    fileManager.saveCartToDatabase(cart);
+                    outputFileManager.saveCartToDatabase(cart);
                     break;
                 case Operation.AddProducts:
                     for (int i = 1; i < data.Length; i++)
                     {
                         var dataSpilted = data[i].Split("&");
-                        fileManager.saveObjectToDatabase(new Product(dataGenerator.getNewGuID(), dataGenerator.GetActualDateTimeOffset(),
+                        outputFileManager.saveObjectToDatabase(new Product(dataGenerator.getNewGuID(), dataGenerator.GetActualDateTimeOffset(),
                             dataGenerator.GetActualDateTimeOffset(), dataSpilted[0], dataSpilted[1], int.Parse(dataSpilted[2])));
                     }
         
@@ -173,8 +174,7 @@ class ShopApp
         }
         pipeServer.Close();
     }
-
-    private static int maxDataLoadTime = 30;
+    
 
     public static Customer findCustomerInDatabase(String login, String password, List<Customer> _customers)
     {
