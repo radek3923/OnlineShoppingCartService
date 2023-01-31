@@ -1,4 +1,6 @@
-﻿namespace ShoppingCartServer.Enums;
+﻿using ShoppingCartServer.Interfaces;
+
+namespace ShoppingCartServer.Enums;
 
 public enum Operation
 {

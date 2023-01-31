@@ -16,20 +16,22 @@ class ShopApp
     
     private static readonly Admin admin = new("admin", "admin", "admin.email.pl", "123456789", AccessLevel.Full);
     private static Customer loggedCustomer;
-    private static int maxDataLoadTime = 30;
 
     public static async Task Main()
     {
         
         CancellationTokenSource cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromSeconds(maxDataLoadTime));
-        
-        FileManager fileManager = new FileManager(cts);
+
         DataGenerator dataGenerator = new DataGenerator();
 
+        FileManager fileManager = new FileManager(cts);
+        // using (FileManager fileManager = new FileManager(cts))
+        // {
         var (importCustomersTask, importProductTask, importShoppingCartsHistoryTask) =
             (fileManager.importCustomers(), fileManager.importProducts(), fileManager.importShoppingCartsHistory());
-        
+
+
         try
         {
             _customers = await importCustomersTask;
@@ -41,6 +43,12 @@ class ShopApp
             throw new Exception(String.Format("Wczytywanie danych z pliku przekroczyło limit {0}s. Trwa zamknięcie programu.", maxDataLoadTime));
         }
 
+        //probably not required
+        fileManager.Dispose();
+        // }
+
+        
+
         // List<CartItem> cartItems = new List<CartItem>();
         // CartItem cartItem1 = new CartItem(new Guid(), new Guid(), 0);
         // CartItem cartItem2 = new CartItem(new Guid(), new Guid(), 0);
@@ -51,12 +59,12 @@ class ShopApp
         // fileManager.saveObjectToDatabase(new Product(new Guid(), new DateTimeOffset(), new DateTimeOffset(), "2", "2", new decimal()));
         //fileManager.saveCartToDatabase(new Cart(new Guid(), new DateTimeOffset(), new DateTimeOffset(), new Guid(), cartItems ));
          
-         // showAllList(_products);
-         // showAllList(_customers);
-         //showAllList(_historyShoppingCarts);
+        // showAllList(_products);
+        // showAllList(_customers);
+        //showAllList(_historyShoppingCarts);
          
-         // Console.WriteLine(dataGenerator.getNewGuID());
-         // Console.WriteLine(dataGenerator.GetActualDateTimeOffset());
+        // Console.WriteLine(dataGenerator.getNewGuID());
+        // Console.WriteLine(dataGenerator.GetActualDateTimeOffset());
 
         var pipeServer = new NamedPipeServerStream("PipeName", PipeDirection.InOut, 2);
         var reader = new StreamReader(pipeServer);
@@ -72,7 +80,7 @@ class ShopApp
         {
             string[] data = clientCommunication.ReadData();
             Operation operation = Enum.Parse<Operation>(data[0]);
-
+        
             switch (operation)
             {
                 case Operation.Disconnect:
@@ -83,10 +91,10 @@ class ShopApp
                     Console.WriteLine("Wybrano logowanie");
                     var login = data[1];
                     var password = data[2];
-
+        
                     Console.WriteLine("Login: " + login);
                     Console.WriteLine("Haslo: " + password);
-
+        
                     loggedCustomer = findCustomerInDatabase(login, password, _customers);
                     bool isUserAdmin = admin.Login.Equals(login) && admin.Password.Equals(password);
                     
@@ -121,9 +129,9 @@ class ShopApp
                     string phoneNumberNew = data[4];
                     string firstNameNew = data[5];
                     string lastNameNew = data[6];
-
+        
                     DataValidator dataValidator = new DataValidator();
-
+        
                     if (dataValidator.isDataValid(loginNew, addressEmailNew, phoneNumberNew, _customers))
                     {
                         Customer newCustomer = new Customer(loginNew, passwordNew, addressEmailNew, phoneNumberNew, dataGenerator.getNewGuID(), firstNameNew, lastNameNew );
@@ -152,7 +160,7 @@ class ShopApp
                         fileManager.saveObjectToDatabase(new Product(dataGenerator.getNewGuID(), dataGenerator.GetActualDateTimeOffset(),
                             dataGenerator.GetActualDateTimeOffset(), dataSpilted[0], dataSpilted[1], int.Parse(dataSpilted[2])));
                     }
-
+        
                     break;
                 case Operation.RemoveProducts:
                     for (int i = 0; i < data.Length; i++)
@@ -163,9 +171,10 @@ class ShopApp
                     break;
             }
         }
-
         pipeServer.Close();
     }
+
+    private static int maxDataLoadTime = 30;
 
     public static Customer findCustomerInDatabase(String login, String password, List<Customer> _customers)
     {

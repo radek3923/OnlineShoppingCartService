@@ -1,4 +1,6 @@
-﻿using ShoppingCartServer.Models;
+﻿using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+using ShoppingCartServer.Models;
 using ShoppingCartServer.Utils;
 
 namespace ShoppingCartServer.FileOperations;
@@ -9,7 +11,26 @@ public class FileManager : IDisposable
     private const string productsPathFile = @"products.csv";
     private const string shoppingHistoryPathFile = @"shoppingCartsHistory.csv";
     private CancellationTokenSource cts;
+    private bool _disposedValue;
+    private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
+    
+    public void Dispose() => Dispose(true);
+    
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                _safeHandle.Dispose();
+            }
 
+            _disposedValue = true;
+        }
+        //Debug log
+        //Console.WriteLine("test xd");
+    }
+    
     public FileManager(CancellationTokenSource cts)
     {
         this.cts = cts;
@@ -19,7 +40,6 @@ public class FileManager : IDisposable
     private const string s1 = ";";
     private const string s2 = "#";
     private const string s3 = "$";
-
 
     public Task<List<Customer>> importCustomers() => Task.Run(() =>
     {
@@ -47,7 +67,6 @@ public class FileManager : IDisposable
                 {
                     Console.WriteLine("Nie udało się zaimportować obiektu o wartości: {0}", line);
                     break;
-                    //throw new Exception("Error while spliting CustomerData ");
                 }
             }
 
@@ -226,11 +245,5 @@ public class FileManager : IDisposable
         productsAsString = productsAsString.Remove(productsAsString.Length-1);
         
         return productsAsString;
-    }
-    
-    public void Dispose()
-    {
-        cts.Dispose();
-        Console.WriteLine("to poprawienia");
     }
 }
