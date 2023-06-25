@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Vg8+oWrE4yXxK7gk0JOsmafBWWJGqRCl3Hq4nj9i1IUImYpWtXq8S78Jes3J8w67Kl7fImJ3vIrgjZvMblAlXA==",
+  "dgSpecHash": "UkxglMJX3L5POrJPouHX3W6dL/mDaXVeJsDXAUiDlpSKKLEBHxPyOKOECm7WKPtoXSZe6brJndPXGhP3XpT3RA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Radek\\RiderProjects\\onlineShoppingCartService\\ShoppingCartServer\\ShoppingCartServer\\ShoppingCartServer.csproj",
+  "projectFilePath": "C:\\Users\\Radek\\RiderProjects\\OnlineShoppingCartService\\ShoppingCartServer\\ShoppingCartServer\\ShoppingCartServer.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
